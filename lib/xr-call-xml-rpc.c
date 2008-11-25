@@ -61,7 +61,7 @@ static void _xr_value_serialize_xmlrpc(xmlNode* node, xr_value* val)
       double dbl_val = -1;
       xr_value_to_double(val, &dbl_val);
       snprintf(buf, sizeof(buf), "%g", dbl_val);
-      xmlNewChild(node, NULL, BAD_CAST "double", NULL);
+      xmlNewChild(node, NULL, BAD_CAST "double", BAD_CAST buf);
       break;
     }
     case XRV_TIME:

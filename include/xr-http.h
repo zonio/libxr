@@ -57,7 +57,7 @@ typedef enum {
 
 typedef enum
 {
-  XR_HTTP_ERROR_FAILED
+  XR_HTTP_ERROR_FAILED = 1
 } XRHttpError;
 
 G_BEGIN_DECLS

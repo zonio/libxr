@@ -25,6 +25,7 @@
   #include <signal.h>
 #endif
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
 #include "xr-server.h"
@@ -899,6 +900,7 @@ gboolean xr_server_simple(const char* cert, int threads, const char* bind, xr_se
 
   if (!xr_server_bind(server, bind, err))
   {
+    xr_server_stop(server);
     xr_server_free(server);
     return FALSE;
   }
