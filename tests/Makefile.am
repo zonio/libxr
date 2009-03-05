@@ -25,7 +25,6 @@ EXTRA_DIST = \
   bench.sh \
   test.xdl \
   server.pem \
-  $(BUILT_SOURCES) \
   zblok/build.sh \
   zblok/client.c \
   zblok/server.c \
