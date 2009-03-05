@@ -98,8 +98,6 @@ AC_CONFIG_FILES([
   docs/Makefile
   pkgconfig/libxr.pc
   pkgconfig/libxr-uninstalled.pc
-  tests/Makefile
-  tests/unit/Makefile
 ])
 AC_OUTPUT
 
