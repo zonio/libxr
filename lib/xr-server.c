@@ -231,7 +231,7 @@ static gboolean _xr_servlet_do_call(xr_servlet* servlet, xr_call* call)
       if (!servlet->def->pre_call(servlet, call))
       {
         // FALSE returned
-        if (xr_call_get_retval(call) == NULL && !xr_call_get_error_code(call))
+        if (xr_call_get_retval(call) == NULL && !xr_call_error_set(call))
           xr_call_set_error(call, -1, "Pre-call did not returned value or set error.");
         goto out;
       }
@@ -247,7 +247,7 @@ static gboolean _xr_servlet_do_call(xr_servlet* servlet, xr_call* call)
     if (servlet->def->fallback(servlet, call))
     {
       // call should be handled
-      if (xr_call_get_retval(call) == NULL && !xr_call_get_error_code(call))
+      if (xr_call_get_retval(call) == NULL && !xr_call_error_set(call))
         xr_call_set_error(call, -1, "Fallback did not returned value or set error.");
     }
     else
@@ -402,7 +402,8 @@ again:
     }
 
     g_ptr_array_add(conn->servlets, servlet);
-  }
+  }else
+    g_free(servlet_name);
   
   return _xr_servlet_do_call(servlet, call);
 }
@@ -515,6 +516,10 @@ static gboolean _xr_server_serve_request(xr_server* server, xr_server_conn* conn
 
   g_return_val_if_fail(server != NULL, FALSE);
   g_return_val_if_fail(conn != NULL, FALSE);
+
+  /* check whether incoming HTTP request is available in one minute */
+  if (!xr_http_has_pending_request(conn->http, 60))
+    return FALSE;
 
   /* receive HTTP request */
   if (!xr_http_read_header(conn->http, NULL))

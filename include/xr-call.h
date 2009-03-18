@@ -146,6 +146,12 @@ xr_value* xr_call_get_retval(xr_call* call);
  */
 void xr_call_set_error(xr_call* call, int code, const char* msg, ...);
 
+/** Check whether the XML-RPC error structure is set
+  *
+  * @param call Call obejct.
+  */
+gboolean xr_call_error_set(xr_call* call);
+
 /** Get error code that is set on the call object.
  *
  * @param call Call obejct.

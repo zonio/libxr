@@ -290,6 +290,15 @@ gboolean xr_http_write_all(xr_http* http, const char* buffer, gssize length, GEr
  */
 gboolean xr_http_is_ready(xr_http* http);
 
+/** Check if object has pending request to be read within given time.
+ * 
+ * @param http HTTP transport object. 
+ * @param timeout The timeout value (in second) for waiting incoming request.
+ * 
+ * @return TRUE if ready.
+ */
+gboolean xr_http_has_pending_request(xr_http* http, time_t timeout);
+
 GQuark xr_http_error_quark();
 
 G_END_DECLS

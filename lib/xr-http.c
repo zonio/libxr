@@ -119,20 +119,21 @@ void xr_http_init()
 
 static gboolean _xr_http_header_parse_first_line(xr_http* http, const char* line)
 {
-  GMatchInfo *match_info = NULL;
+  GMatchInfo *match_info_res = NULL;
+  GMatchInfo *match_info_req = NULL; 
   gboolean retval = TRUE;
 
   xr_http_init();
   
-  if (g_regex_match(regex_res, line, 0, &match_info))
+  if (g_regex_match(regex_res, line, 0, &match_info_res))
   {
     char* code;
 
-    code = g_match_info_fetch(match_info, 2);
+    code = g_match_info_fetch(match_info_res, 2);
     http->res_code = atoi(code);
     g_free(code);
     g_free(http->res_reason);
-    http->res_reason = g_match_info_fetch(match_info, 3);
+    http->res_reason = g_match_info_fetch(match_info_res, 3);
     http->msg_type = XR_HTTP_RESPONSE;
   }
   else if (g_regex_match(regex_req, line, 0, &match_info))
@@ -140,15 +141,16 @@ static gboolean _xr_http_header_parse_first_line(xr_http* http, const char* line
     g_free(http->req_method);
     g_free(http->req_resource);
     g_free(http->req_version);
-    http->req_method = g_match_info_fetch(match_info, 1);
-    http->req_resource = g_match_info_fetch(match_info, 2);
-    http->req_version = g_match_info_fetch(match_info, 3);
+    http->req_method = g_match_info_fetch(match_info_req, 1);
+    http->req_resource = g_match_info_fetch(match_info_req, 2);
+    http->req_version = g_match_info_fetch(match_info_req, 3)
     http->msg_type = XR_HTTP_REQUEST;
   }
   else
     retval = FALSE;
 
-  g_match_info_free(match_info);
+  g_match_info_free(match_info_req);
+  g_match_info_free(match_info_res);
 
   return retval;
 }
@@ -778,6 +780,22 @@ gboolean xr_http_is_ready(xr_http* http)
   g_return_val_if_fail(http != NULL, FALSE);
 
   return http->state == STATE_INIT;
+}
+
+gboolean xr_http_has_pending_request(xr_http* http, time_t timeout)
+{
+  fd_set socks;
+  struct timeval to;
+  int s;
+
+  g_return_val_if_fail(http != NULL, FALSE);
+  if (BIO_pending(http->bio) > 0) return TRUE;
+  s = BIO_get_fd(http->bio, NULL);
+  to.tv_sec = timeout;
+  to.tv_usec = 0;
+  FD_ZERO(&socks);
+  FD_SET(s, &socks);
+  return select(s + 1, &socks, NULL, NULL, &to) > 0;
 }
 
 GQuark xr_http_error_quark()

@@ -65,6 +65,7 @@ AS_IF([$CC --version | head -n1 | grep '(GCC) 4\.' &>/dev/null],
 
 AS_IF([test "x$have_json" != "xyes"], [JSON_REQUIRES=""])
 
+AC_CONFIG_COMMANDS_PRE(export have_json)
 # generate xr-config.h
 AC_CONFIG_COMMANDS([xr-config.h],
 [

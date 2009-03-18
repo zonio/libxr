@@ -148,6 +148,9 @@ static xr_value* xr_value_fmt_build_value(const char** const fmt, va_list* args,
      case 's':
        value = xr_value_string_new(va_arg(*args, char *));
        break;
+     case 't':	
+       value = xr_value_time_new(va_arg(*args, char *));
+       break;
 
      case 'S':
        value = va_arg(*args, xr_value*);
@@ -382,6 +385,16 @@ static gboolean xr_value_fmt_parse_value(xr_value* value, const char** const fmt
          return FALSE;
      }
        break;
+
+      case 't':
+      {
+        char **nval = va_arg(*args, char **);
+        if (nval == NULL)
+          return FALSE;
+        if (!xr_value_to_time(value, nval))
+          return FALSE;
+      }
+        break;
 
      case 's':
      {

@@ -175,6 +175,13 @@ void xr_call_set_error(xr_call* call, int code, const char* msg, ...)
   va_end(args);
 }
 
+gboolean xr_call_error_set(xr_call* call)
+{
+  xr_trace(XR_DEBUG_CALL_TRACE, "(call=%p)", call);
+  g_return_val_if_fail(call != NULL, FALSE);
+  return call->error_set;
+}
+
 int xr_call_get_error_code(xr_call* call)
 {
   xr_trace(XR_DEBUG_CALL_TRACE, "(call=%p)", call);
