@@ -136,14 +136,14 @@ static gboolean _xr_http_header_parse_first_line(xr_http* http, const char* line
     http->res_reason = g_match_info_fetch(match_info_res, 3);
     http->msg_type = XR_HTTP_RESPONSE;
   }
-  else if (g_regex_match(regex_req, line, 0, &match_info))
+  else if (g_regex_match(regex_req, line, 0, &match_info_req))
   {
     g_free(http->req_method);
     g_free(http->req_resource);
     g_free(http->req_version);
     http->req_method = g_match_info_fetch(match_info_req, 1);
     http->req_resource = g_match_info_fetch(match_info_req, 2);
-    http->req_version = g_match_info_fetch(match_info_req, 3)
+    http->req_version = g_match_info_fetch(match_info_req, 3);
     http->msg_type = XR_HTTP_REQUEST;
   }
   else
