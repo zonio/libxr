@@ -172,7 +172,13 @@ static int BIO_xread(BIO* bio, void* buf, int len)
   return len;
 }
 
-/* return -1 on error, 0 on success, 1 if line was longer than buffer */
+/* return
+ *  0 on success
+ * -1 if function wasn't able to read \n
+ * -2 if BIO_gets read no data successfully
+ * -3 if BIO_gets read no data successfully
+ * -4 if operation is not implemented in the specific BIO type
+*/
 static int BIO_xgets(BIO* bio, char* buffer, int length)
 {
   char *cp, tmp;
@@ -181,11 +187,13 @@ static int BIO_xgets(BIO* bio, char* buffer, int length)
   switch (BIO_gets(bio, buffer, length - 1)) 
   {
     case -2:
-      return -1;
+      return -4;
+
+    case -1:
+      return -3;
 
     case 0:
-    case -1:
-      return 1;
+			return -2;
 
     default:
       for (cp = buffer; *cp; cp++)
@@ -200,7 +208,7 @@ static int BIO_xgets(BIO* bio, char* buffer, int length)
       tmp = '\0';
       while (tmp != '\n')
         if (BIO_read(bio, &tmp, 1) != 1)
-          return 1;
+          return -1;
       break;
   }
 
@@ -260,11 +268,13 @@ gboolean xr_http_read_header(xr_http* http, GError** err)
     int rs = BIO_xgets(http->bio, header, MAX_HEADER_SIZE);
     switch (rs)
     {
-      case -1:
+			case -4:
+			case -3:
+			case -2:
         g_set_error(err, XR_HTTP_ERROR, XR_HTTP_ERROR_FAILED, "HTTP xgets failed: %s.", xr_get_bio_error_string());
         goto err;
 
-      case 1:
+      case -1:
         g_set_error(err, XR_HTTP_ERROR, XR_HTTP_ERROR_FAILED, "HTTP header too long, limit is %d bytes.", MAX_HEADER_SIZE);
         goto err;
 
