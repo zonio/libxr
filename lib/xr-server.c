@@ -21,9 +21,16 @@
   #include <winsock2.h>
 #else
   #include <sys/select.h>
+  #include <sys/socket.h>
+  #include <sys/types.h>
+  #include <netdb.h>
+  #include <unistd.h>
   #include <arpa/inet.h>
+  #include <netinet/tcp.h>
   #include <signal.h>
 #endif
+#include <errno.h>
+#include <string.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -31,6 +38,17 @@
 #include "xr-server.h"
 #include "xr-http.h"
 #include "xr-utils.h"
+
+/* OpenSSL 1.0.0 supports IPv6 in BIO.  If we are using OpenSSL with
+ * version lower than 1.0.0, we must setup IPv6 socket ourself.
+ *
+ * The approach is to create an IPv6 socket and bind it to a BIO.
+ */
+#if defined XR_ENABLE_IPv6
+#  if !defined WIN32 && OPENSSL_VERSION_NUMBER < 0x10000000L
+#    define XR_CHECK_IPV6
+#  endif
+#endif
 
 /* server */
 
@@ -42,6 +60,9 @@ struct _xr_server
   GThreadPool* pool;
   gboolean secure;
   gboolean running;
+#ifdef XR_CHECK_IPV6
+  gboolean ipv6;
+#endif
   GSList* servlet_types;
   GHashTable* sessions;
   GStaticRWLock sessions_lock;
@@ -596,7 +617,11 @@ static void _xr_server_connection_thread(xr_server_conn* conn, xr_server* server
   g_return_if_fail(conn != NULL);
   g_return_if_fail(server != NULL);
 
-  if (server->secure)
+  if (server->secure
+#ifdef XR_CHECK_IPV6
+		  && (!server->ipv6)
+#endif
+     )
     if (BIO_do_handshake(conn->bio) <= 0)
       goto done;
 
@@ -620,21 +645,66 @@ void xr_server_stop(xr_server* server)
 static gboolean _xr_server_accept_connection(xr_server* server, GError** err)
 {
   GError* local_err = NULL;
-  xr_server_conn* conn;
+  xr_server_conn* conn = NULL;
 
   xr_trace(XR_DEBUG_SERVER_TRACE, "(server=%p, err=%p)", server, err);
 
   g_return_val_if_fail(server != NULL, FALSE);
   g_return_val_if_fail(err == NULL || *err == NULL, FALSE);
 
-  if (BIO_do_accept(server->bio_accept) <= 0)
-  {
-    g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "accept failed: %s", xr_get_bio_error_string());
-    return FALSE;
-  }
+#ifdef XR_CHECK_IPV6
+  if (server->ipv6) {
+    BIO* bbio = NULL;
+    BIO* acpt = NULL;
+    int  connfd = -1;
 
-  // new connection accepted
-  conn = xr_server_conn_new(BIO_pop(server->bio_accept));
+    connfd = accept(server->sock, (struct sockaddr*)NULL, NULL);
+    if (connfd < 0) {
+      g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "accept failed: %s", xr_get_bio_error_string());
+      return FALSE;
+    }
+
+    acpt = BIO_new_socket(connfd, BIO_CLOSE);
+    bbio = BIO_new(BIO_f_buffer());
+    BIO_set_buffer_size(bbio, 2048);
+
+    if (server->secure) {
+      BIO* sbio = BIO_new_ssl(server->ctx, 0);
+      SSL* ssl = NULL;
+
+      BIO_get_ssl(sbio, &ssl);
+      SSL_set_mode(ssl, SSL_MODE_AUTO_RETRY);
+
+      /* The null BIO is used to avoid to crash from BIO_copy_next_retry() */
+      sbio = BIO_push(sbio, BIO_new(BIO_f_null()));
+
+      /* Need to chain these BIO before SSL_accept() */
+      sbio = BIO_push(bbio, sbio);
+
+      SSL_set_bio(ssl, acpt, acpt);
+      if (SSL_accept(ssl) <= 0) { /* SSL handshake here */
+        g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "SSL handshake error");
+        BIO_free_all(sbio);
+        return FALSE;
+      }
+      conn = xr_server_conn_new(sbio);
+    } else {
+      conn = xr_server_conn_new(BIO_push(bbio, acpt));
+    }
+  } else {
+#endif	/* XR_CHECK_IPV6 */
+    if (BIO_do_accept(server->bio_accept) <= 0)
+    {
+      g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "accept failed: %s", xr_get_bio_error_string());
+      return FALSE;
+    }
+
+    // new connection accepted
+    conn = xr_server_conn_new(BIO_pop(server->bio_accept));
+
+#ifdef XR_CHECK_IPV6
+  }
+#endif
 
   // if we have too many clients in the queue, pause accepting new ones
   // and leave some time to process existing ones, this ensures that
@@ -796,6 +866,56 @@ SSL_CTX* xr_server_get_ssl_context(xr_server* server)
   return NULL;
 }
 
+#ifdef XR_CHECK_IPV6
+static int xr_server_new_sock_ipv6(GError** err, const char* host, const char* serv)
+{
+  int n, sockfd;
+  const int optval=1;
+  struct addrinfo hints, *res=NULL;
+
+  xr_trace(XR_DEBUG_SERVER_TRACE, "(host=%p, serv=%s, err=%p)", host, serv, err);
+  g_return_val_if_fail(err == NULL || *err == NULL, -1);
+
+  memset(&hints, '\0', sizeof(hints));
+  hints.ai_family = AF_INET6;
+  hints.ai_socktype = SOCK_STREAM;
+
+  if ((n = getaddrinfo(host, serv, &hints, &res)) != 0) {
+    g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED,
+        "getaddrinfo failed: %s", gai_strerror(n));
+    return -1;
+  }
+
+  if ((sockfd = socket(AF_INET6, res->ai_socktype, res->ai_protocol)) < 0) {
+    g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED,
+        "create socket failed (errno=%d)", errno);
+    goto err;
+  }
+
+  setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, &optval, sizeof(optval));
+  setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
+
+  if (bind(sockfd, (struct sockaddr*)res->ai_addr, res->ai_addrlen) < 0) {
+    g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED,
+        "bind socket failed (errno=%d)", errno);
+    close(sockfd);
+    sockfd = -1;
+    goto err;
+  }
+
+  if (listen(sockfd, 32) < 0) {
+    g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED,
+        "listen failed (errno=%d)", errno);
+    close(sockfd);
+    sockfd = -1;
+  }
+
+err:
+  freeaddrinfo(res);
+  return sockfd;
+}
+#endif
+
 gboolean xr_server_bind(xr_server* server, const char* port, GError** err)
 {
   BIO* bio_buffer;
@@ -805,6 +925,39 @@ gboolean xr_server_bind(xr_server* server, const char* port, GError** err)
   g_return_val_if_fail(server != NULL, FALSE);
   g_return_val_if_fail(port != NULL, FALSE);
   g_return_val_if_fail(err == NULL || *err == NULL, FALSE);
+
+#ifdef XR_CHECK_IPV6
+  do {
+    char* h = g_strdup(port);
+    char* t, *p = NULL;
+    int sock;
+
+    for (t = h; *t; ++t)
+      if (*t == ':') p = t;
+
+    if (p == NULL) {      /* no ':' found */
+      g_free(h);
+      break;
+    }
+
+    *p++ = '\0';          /* `p' points to port number */
+    if (!strchr(h, ':')) {
+      g_free(h);
+      break;
+    }
+
+    /* IPv6 address */
+    if (h[1] != ':') sock = xr_server_new_sock_ipv6(err, h, p);
+    else sock = xr_server_new_sock_ipv6(err, NULL, p);
+
+    g_free(h);
+    if (sock < 0) return FALSE;
+
+    server->ipv6 = TRUE;
+    server->sock = sock;
+    return TRUE;
+  }while(0);
+#endif
 
   server->bio_accept = BIO_new_accept((char*)port);
   if (server->bio_accept == NULL)
