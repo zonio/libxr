@@ -365,7 +365,7 @@ gboolean xr_client_call(xr_client_conn* conn, xr_call* call, GError** err)
   g_string_free(response, TRUE);
   if (!rs)
   {
-    g_set_error(err, 0, xr_call_get_error_code(call), "%s", xr_call_get_error_message(call));
+    g_set_error(err, XR_REMOTE_SERVER_ERROR, xr_call_get_error_code(call), "%s", xr_call_get_error_message(call));
 
     if (xr_debug_enabled & XR_DEBUG_CALL)
       xr_call_dump(call, 0);
@@ -399,4 +399,10 @@ GQuark xr_client_error_quark()
 {
   static GQuark quark;
   return quark ? quark : (quark = g_quark_from_static_string("xr_client_error"));
+}
+
+GQuark xr_remote_server_error_quark()
+{
+  static GQuark quark;
+  return quark ? quark : (quark = g_quark_from_static_string("Remote server error"));
 }

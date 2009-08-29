@@ -38,6 +38,7 @@
 #include "xr-value-utils.h"
 
 #define XR_CLIENT_ERROR xr_client_error_quark()
+#define XR_REMOTE_SERVER_ERROR xr_remote_server_error_quark()
 
 typedef enum
 {
@@ -153,6 +154,8 @@ void xr_client_close(xr_client_conn* conn);
 gboolean xr_client_call(xr_client_conn* conn, xr_call* call, GError** err);
 
 GQuark xr_client_error_quark();
+
+GQuark xr_remote_server_error_quark();
 
 G_END_DECLS
 
