@@ -1,4 +1,11 @@
-1.0 - 2009-02-16
+1.0 - 2009-09-17
+~~~~~~~~~~~~~~~~
+- Added timeout.
+- Changed error values returned from BIO_xgets.
+- Added IPv6 support by David Lee.
+- Changed domain number for errors returned from server.
+
+0.99 - 2009-02-16
 ~~~~~~~~~~~~~~~~~~
 - Fix some small bugs
 
