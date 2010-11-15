@@ -88,7 +88,7 @@ static gboolean _parse_uri(const char* uri, int* secure, char** host, char** res
   g_return_val_if_fail(host != NULL, FALSE);
   g_return_val_if_fail(resource != NULL, FALSE);
 
-  if ((rs = regcomp(&r, "^([a-z]+)://([a-z0-9.-]+(:([0-9]+))?)(/.+)?$", REG_EXTENDED | REG_ICASE)))
+  if ((rs = regcomp(&r, "^([a-z]+)://([a-z0-9.:-]+(:(:)?([0-9]+))?)(/.+)?$", REG_EXTENDED | REG_ICASE)))
     return FALSE;
   rs = regexec(&r, uri, 7, m, 0);
   regfree(&r);
