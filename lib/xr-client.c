@@ -133,7 +133,7 @@ static gboolean _parse_uri(const char* uri, int* secure, char** host, char** res
   // precompile regexp
   G_LOCK(regex);
   if (regex == NULL)
-    regex = g_regex_new("^([a-z]+)://([a-z0-9.-]+(:([0-9]+))?)(/.+)?$", G_REGEX_CASELESS, 0, NULL);
+    regex = g_regex_new("^([a-z]+)://([a-z0-9.:-]+(:([0-9]+))?)(/.+)?$", G_REGEX_CASELESS, 0, NULL);
   G_UNLOCK(regex);
 
   if (!g_regex_match(regex, uri, 0, &match_info))
