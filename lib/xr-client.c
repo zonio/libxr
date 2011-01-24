@@ -24,6 +24,19 @@
 #include <regex.h>
 #endif
 
+#ifdef WIN32
+  #include <winsock2.h>
+#else
+  #include <sys/select.h>
+  #include <sys/socket.h>
+  #include <sys/types.h>
+  #include <netdb.h>
+  #include <unistd.h>
+  #include <arpa/inet.h>
+  #include <netinet/tcp.h>
+  #include <signal.h>
+#endif
+
 #include "xr-client.h"
 #include "xr-http.h"
 #include "xr-utils.h"
@@ -164,6 +177,47 @@ static gboolean _parse_uri(const char* uri, int* secure, char** host, char** res
 
 #endif
 
+static int xr_client_new_sock_ipv6(GError** err, const char* host, const char* serv)
+{
+  int n, sockfd;
+  const int optval=1;
+  struct addrinfo hints, *res=NULL;
+
+  xr_trace(XR_DEBUG_CLIENT_TRACE, "(host=%p, serv=%s, err=%p)", host, serv, err);
+  g_return_val_if_fail(err == NULL || *err == NULL, -1);
+
+  memset(&hints, '\0', sizeof(hints));
+  hints.ai_family = AF_INET6;
+  hints.ai_socktype = SOCK_STREAM;
+
+  if ((n = getaddrinfo(host, serv, &hints, &res)) != 0) {
+    g_set_error(err, XR_CLIENT_ERROR, XR_CLIENT_ERROR_FAILED,
+        "getaddrinfo failed: %s", gai_strerror(n));
+    return -1;
+  }
+
+  if ((sockfd = socket(AF_INET6, res->ai_socktype, res->ai_protocol)) < 0) {
+    g_set_error(err, XR_CLIENT_ERROR, XR_CLIENT_ERROR_FAILED,
+        "create socket failed (errno=%d)", errno);
+    goto err;
+  }
+
+  setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, &optval, sizeof(optval));
+  setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
+
+  if (connect(sockfd, (struct sockaddr*)res->ai_addr, res->ai_addrlen) < 0) {
+    g_set_error(err, XR_CLIENT_ERROR, XR_CLIENT_ERROR_FAILED,
+        "connect socket failed (errno=%d)", errno);
+    close(sockfd);
+    sockfd = -1;
+    goto err;
+  }
+
+err:
+  freeaddrinfo(res);
+  return sockfd;
+}
+
 gboolean xr_client_open(xr_client_conn* conn, const char* uri, GError** err)
 {
   g_return_val_if_fail(conn != NULL, FALSE);
@@ -201,12 +255,45 @@ gboolean xr_client_open(xr_client_conn* conn, const char* uri, GError** err)
     BIO_set_buffer_size(conn->bio, 2048);
   }
 
+  do {
+    char* h = g_strdup(conn->host);
+    char* t, *p = NULL;
+    int sock;
+
+    for (t = h; *t; ++t)
+      if (*t == ':') p = t;
+
+    if (p == NULL) {      /* no ':' found */
+      g_free(h);
+      break;
+    }
+
+    *p++ = '\0';          /* `p' points to port number */
+    if (!strchr(h, ':')) {
+      g_free(h);
+      break;
+    }
+    
+    /* IPv6 address */
+    if (h[1] != ':') sock = xr_client_new_sock_ipv6(err, h, p);
+    else sock = xr_client_new_sock_ipv6(err, NULL, p);
+
+    g_free(h);
+    if (sock < 0) return FALSE;
+
+    BIO_set_fd(conn->bio, sock, BIO_CLOSE);
+    
+    
+  }while(0);
+  
+/*
   if (BIO_do_connect(conn->bio) <= 0)
   {
     g_set_error(err, XR_CLIENT_ERROR, XR_CLIENT_ERROR_FAILED, "BIO_do_connect failed: %s", xr_get_bio_error_string());
     BIO_free_all(conn->bio);
     return FALSE;
   }
+*/
 
   xr_set_nodelay(conn->bio);
 
