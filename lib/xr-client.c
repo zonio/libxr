@@ -238,10 +238,10 @@ gboolean xr_client_open(xr_client_conn* conn, const char* uri, GError** err)
     return FALSE;
   }
 
+  SSL* ssl;
+
   if (conn->secure)
   {
-    SSL* ssl;
-
     conn->bio = BIO_new_buffer_ssl_connect(conn->ctx);
     BIO_get_ssl(conn->bio, &ssl);
     SSL_set_mode(ssl, SSL_MODE_AUTO_RETRY);
@@ -269,11 +269,12 @@ gboolean xr_client_open(xr_client_conn* conn, const char* uri, GError** err)
     }
 
     *p++ = '\0';          /* `p' points to port number */
+    /*
     if (!strchr(h, ':')) {
       g_free(h);
       break;
     }
-    
+    */
     /* IPv6 address */
     if (h[1] != ':') sock = xr_client_new_sock_ipv6(err, h, p);
     else sock = xr_client_new_sock_ipv6(err, NULL, p);
@@ -283,7 +284,16 @@ gboolean xr_client_open(xr_client_conn* conn, const char* uri, GError** err)
 
     BIO_set_fd(conn->bio, sock, BIO_CLOSE);
     
-    
+    if (conn->secure) {
+      SSL_set_fd(ssl,sock);
+      
+      int err_code = SSL_connect(ssl);    /* SSL handshake here */
+      if (err_code <= 0) { 
+        g_set_error(err, XR_CLIENT_ERROR, XR_CLIENT_ERROR_FAILED, "SSL handshake error: %d", SSL_get_error(ssl, err_code));
+        BIO_free_all(conn->bio);
+        return FALSE;
+      }
+    }
   }while(0);
   
 /*
@@ -296,7 +306,7 @@ gboolean xr_client_open(xr_client_conn* conn, const char* uri, GError** err)
 */
 
   xr_set_nodelay(conn->bio);
-
+/*
   if (conn->secure)
   {
     if (BIO_do_handshake(conn->bio) <= 0)
@@ -306,7 +316,7 @@ gboolean xr_client_open(xr_client_conn* conn, const char* uri, GError** err)
       return FALSE;
     }
   }
-
+*/
   conn->http = xr_http_new(conn->bio);
   g_free(conn->session_id);
   conn->session_id = g_strdup_printf("%08x%08x%08x%08x", g_random_int(), g_random_int(), g_random_int(), g_random_int());

@@ -39,6 +39,8 @@
 #include "xr-http.h"
 #include "xr-utils.h"
 
+#define XR_ENABLE_IPv6
+
 /* OpenSSL 1.0.0 supports IPv6 in BIO.  If we are using OpenSSL with
  * version lower than 1.0.0, we must setup IPv6 socket ourself.
  *
@@ -955,6 +957,7 @@ gboolean xr_server_bind(xr_server* server, const char* port, GError** err)
 
     server->ipv6 = TRUE;
     server->sock = sock;
+    
     return TRUE;
   }while(0);
 #endif
