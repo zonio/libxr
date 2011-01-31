@@ -41,6 +41,19 @@
 #include "xr-http.h"
 #include "xr-utils.h"
 
+#define XR_ENABLE_IPv6
+
+/* OpenSSL 1.0.0 supports IPv6 in BIO.  If we are using OpenSSL with
+ * version lower than 1.0.0, we must setup IPv6 socket ourself.
+ *
+ * The approach is to create an IPv6 socket and bind it to a BIO.
+ */
+#if defined XR_ENABLE_IPv6
+#  if !defined WIN32 && OPENSSL_VERSION_NUMBER < 0x10000000L
+#    define XR_CHECK_IPV6
+#  endif
+#endif
+
 struct _xr_client_conn
 {
   SSL_CTX* ctx;
@@ -177,6 +190,25 @@ static gboolean _parse_uri(const char* uri, int* secure, char** host, char** res
 
 #endif
 
+#ifdef XR_CHECK_IPV6
+static gboolean xr_client_try_ipv6_resolve(GError** err, const char* host, const char* port)
+{
+  int n;
+  struct addrinfo hints, *res=NULL;
+  
+  memset(&hints, '\0', sizeof(hints));
+  hints.ai_family = AF_INET6;
+  hints.ai_socktype = SOCK_STREAM;
+  
+  if (getaddrinfo(host, port, &hints, &res) != 0) {
+    freeaddrinfo(res);
+    return FALSE;
+  }
+  
+  freeaddrinfo(res);
+  return TRUE;
+}
+
 static int xr_client_new_sock_ipv6(GError** err, const char* host, const char* serv)
 {
   int n, sockfd;
@@ -217,6 +249,7 @@ err:
   freeaddrinfo(res);
   return sockfd;
 }
+#endif
 
 gboolean xr_client_open(xr_client_conn* conn, const char* uri, GError** err)
 {
@@ -239,6 +272,7 @@ gboolean xr_client_open(xr_client_conn* conn, const char* uri, GError** err)
   }
 
   SSL* ssl;
+  gboolean ipv6 = FALSE;
 
   if (conn->secure)
   {
@@ -255,6 +289,7 @@ gboolean xr_client_open(xr_client_conn* conn, const char* uri, GError** err)
     BIO_set_buffer_size(conn->bio, 2048);
   }
 
+#ifdef XR_CHECK_IPV6
   do {
     char* h = g_strdup(conn->host);
     char* t, *p = NULL;
@@ -269,12 +304,12 @@ gboolean xr_client_open(xr_client_conn* conn, const char* uri, GError** err)
     }
 
     *p++ = '\0';          /* `p' points to port number */
-    /*
-    if (!strchr(h, ':')) {
+    
+    if (!xr_client_try_ipv6_resolve(err, h, p))
+    {
       g_free(h);
       break;
     }
-    */
     /* IPv6 address */
     if (h[1] != ':') sock = xr_client_new_sock_ipv6(err, h, p);
     else sock = xr_client_new_sock_ipv6(err, NULL, p);
@@ -291,23 +326,27 @@ gboolean xr_client_open(xr_client_conn* conn, const char* uri, GError** err)
       if (err_code <= 0) { 
         g_set_error(err, XR_CLIENT_ERROR, XR_CLIENT_ERROR_FAILED, "SSL handshake error: %d", SSL_get_error(ssl, err_code));
         BIO_free_all(conn->bio);
+        close(sock);
         return FALSE;
       }
     }
+    ipv6 = TRUE;
   }while(0);
-  
-/*
-  if (BIO_do_connect(conn->bio) <= 0)
+#endif
+
+  if (!ipv6)
   {
-    g_set_error(err, XR_CLIENT_ERROR, XR_CLIENT_ERROR_FAILED, "BIO_do_connect failed: %s", xr_get_bio_error_string());
-    BIO_free_all(conn->bio);
-    return FALSE;
+    if (BIO_do_connect(conn->bio) <= 0)
+    {
+      g_set_error(err, XR_CLIENT_ERROR, XR_CLIENT_ERROR_FAILED, "BIO_do_connect failed: %s", xr_get_bio_error_string());
+      BIO_free_all(conn->bio);
+      return FALSE;
+    }
   }
-*/
 
   xr_set_nodelay(conn->bio);
-/*
-  if (conn->secure)
+
+  if (conn->secure && !ipv6)
   {
     if (BIO_do_handshake(conn->bio) <= 0)
     {
@@ -316,7 +355,7 @@ gboolean xr_client_open(xr_client_conn* conn, const char* uri, GError** err)
       return FALSE;
     }
   }
-*/
+
   conn->http = xr_http_new(conn->bio);
   g_free(conn->session_id);
   conn->session_id = g_strdup_printf("%08x%08x%08x%08x", g_random_int(), g_random_int(), g_random_int(), g_random_int());

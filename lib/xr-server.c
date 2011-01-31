@@ -869,6 +869,24 @@ SSL_CTX* xr_server_get_ssl_context(xr_server* server)
 }
 
 #ifdef XR_CHECK_IPV6
+static gboolean xr_server_try_ipv6_resolve(GError** err, const char* host, const char* port)
+{
+  int n;
+  struct addrinfo hints, *res=NULL;
+  
+  memset(&hints, '\0', sizeof(hints));
+  hints.ai_family = AF_INET6;
+  hints.ai_socktype = SOCK_STREAM;
+  
+  if (getaddrinfo(host, port, &hints, &res) != 0) {
+    freeaddrinfo(res);
+    return FALSE;
+  }
+  
+  freeaddrinfo(res);
+  return TRUE;
+}
+
 static int xr_server_new_sock_ipv6(GError** err, const char* host, const char* serv)
 {
   int n, sockfd;
@@ -943,11 +961,10 @@ gboolean xr_server_bind(xr_server* server, const char* port, GError** err)
     }
 
     *p++ = '\0';          /* `p' points to port number */
-    if (!strchr(h, ':')) {
-      g_free(h);
-      break;
-    }
 
+    if (!xr_server_try_ipv6_resolve(err, h, p))
+      break;
+    
     /* IPv6 address */
     if (h[1] != ':') sock = xr_server_new_sock_ipv6(err, h, p);
     else sock = xr_server_new_sock_ipv6(err, NULL, p);
@@ -1028,9 +1045,11 @@ GQuark xr_server_error_quark()
 /* simple server setup function */
 
 static xr_server* server = NULL;
+static xr_server* server2 = NULL;
 static void _sh(int signum)
 {
   xr_server_stop(server);
+  xr_server_stop(server2);
 }
 
 gboolean xr_server_simple(const char* cert, int threads, const char* bind, xr_servlet_def** servlets, GError** err)
@@ -1038,7 +1057,7 @@ gboolean xr_server_simple(const char* cert, int threads, const char* bind, xr_se
   if (!g_thread_supported())
     g_thread_init(NULL);
 
-  g_return_val_if_fail(server == NULL, FALSE);
+//  g_return_val_if_fail(server == NULL, FALSE);
   g_return_val_if_fail(threads > 0, FALSE);
   g_return_val_if_fail(bind != NULL, FALSE);
   g_return_val_if_fail(servlets != NULL, FALSE);
@@ -1055,14 +1074,19 @@ gboolean xr_server_simple(const char* cert, int threads, const char* bind, xr_se
     return FALSE;
 #endif
 
-  server = xr_server_new(cert, threads, err);
-  if (server == NULL)
+  xr_server *used_server;
+
+  if (server == NULL) used_server = server;
+  else used_server = server2;
+
+  used_server = xr_server_new(cert, threads, err);
+  if (used_server == NULL)
     return FALSE;
 
-  if (!xr_server_bind(server, bind, err))
+  if (!xr_server_bind(used_server, bind, err))
   {
-    xr_server_stop(server);
-    xr_server_free(server);
+    xr_server_stop(used_server);
+    xr_server_free(used_server);
     return FALSE;
   }
 
@@ -1070,17 +1094,17 @@ gboolean xr_server_simple(const char* cert, int threads, const char* bind, xr_se
   {
     while (*servlets)
     {
-      xr_server_register_servlet(server, *servlets);
+      xr_server_register_servlet(used_server, *servlets);
       servlets++;
     }
   }
 
-  if (!xr_server_run(server, err))
+  if (!xr_server_run(used_server, err))
   {
-    xr_server_free(server);
+    xr_server_free(used_server);
     return FALSE;
   }
 
-  xr_server_free(server);
+  xr_server_free(used_server);
   return TRUE;
 }
