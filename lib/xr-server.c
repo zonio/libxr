@@ -39,8 +39,6 @@
 #include "xr-http.h"
 #include "xr-utils.h"
 
-#define XR_ENABLE_IPv6
-
 /* OpenSSL 1.0.0 supports IPv6 in BIO.  If we are using OpenSSL with
  * version lower than 1.0.0, we must setup IPv6 socket ourself.
  *
@@ -899,7 +897,11 @@ static int xr_server_new_sock_ipv6(GError** err, const char* host, const char* s
   memset(&hints, '\0', sizeof(hints));
   hints.ai_family = AF_INET6;
   hints.ai_socktype = SOCK_STREAM;
-
+  if (host == NULL)
+  {
+    hints.ai_flags = AI_PASSIVE;
+  }
+  
   if ((n = getaddrinfo(host, serv, &hints, &res)) != 0) {
     g_set_error(err, XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED,
         "getaddrinfo failed: %s", gai_strerror(n));
@@ -961,12 +963,13 @@ gboolean xr_server_bind(xr_server* server, const char* port, GError** err)
     }
 
     *p++ = '\0';          /* `p' points to port number */
-
-    if (!xr_server_try_ipv6_resolve(err, h, p))
-      break;
+    
+    if (h[0] != ':')
+      if (!xr_server_try_ipv6_resolve(err, h, p))
+        break;
     
     /* IPv6 address */
-    if (h[1] != ':') sock = xr_server_new_sock_ipv6(err, h, p);
+    if (h[0] != ':') sock = xr_server_new_sock_ipv6(err, h, p);
     else sock = xr_server_new_sock_ipv6(err, NULL, p);
 
     g_free(h);
@@ -1044,12 +1047,28 @@ GQuark xr_server_error_quark()
 
 /* simple server setup function */
 
-static xr_server* server = NULL;
-static xr_server* server2 = NULL;
-static void _sh(int signum)
+typedef struct _server_pool server_pool;
+
+struct _server_pool
 {
-  xr_server_stop(server);
-  xr_server_stop(server2);
+  xr_server* server;
+  server_pool* next;
+};
+
+static server_pool* pool = NULL;
+
+void _sh(int signum)
+{
+  server_pool* iter = pool;
+  while (iter != NULL)
+  {
+    if (iter->server != NULL)
+    {
+      xr_server_stop(iter->server);
+    }
+    iter = iter->next;
+    
+  }
 }
 
 gboolean xr_server_simple(const char* cert, int threads, const char* bind, xr_servlet_def** servlets, GError** err)
@@ -1057,7 +1076,6 @@ gboolean xr_server_simple(const char* cert, int threads, const char* bind, xr_se
   if (!g_thread_supported())
     g_thread_init(NULL);
 
-//  g_return_val_if_fail(server == NULL, FALSE);
   g_return_val_if_fail(threads > 0, FALSE);
   g_return_val_if_fail(bind != NULL, FALSE);
   g_return_val_if_fail(servlets != NULL, FALSE);
@@ -1076,12 +1094,27 @@ gboolean xr_server_simple(const char* cert, int threads, const char* bind, xr_se
 
   xr_server *used_server;
 
-  if (server == NULL) used_server = server;
-  else used_server = server2;
-
   used_server = xr_server_new(cert, threads, err);
   if (used_server == NULL)
     return FALSE;
+
+  if (pool == NULL)
+  {
+    pool = g_new0(server_pool, 1);
+    pool->server = used_server;
+    pool->next = NULL;
+  }
+  else
+  {
+    server_pool* iter = pool;
+    while (iter->next != NULL)
+    {
+      iter = iter->next;
+    }
+    iter->next = g_new0(server_pool, 1);
+    iter->next->server = used_server;
+    iter->next->next = NULL;
+  }
 
   if (!xr_server_bind(used_server, bind, err))
   {
