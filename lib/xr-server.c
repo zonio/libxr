@@ -979,8 +979,17 @@ gboolean xr_server_bind(xr_server* server, const char* port, GError** err)
     
     return TRUE;
   }while(0);
-#endif
+#else
+  if (port[0] == '*')
+  {
+    char *p = g_strdup(port);
+    p++;
+    p = g_strconcat("0::0", p, NULL);
 
+    server->bio_accept = BIO_new_accept(p);  
+  }
+  else
+#endif
   server->bio_accept = BIO_new_accept((char*)port);
   if (server->bio_accept == NULL)
   {
