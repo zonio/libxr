@@ -46,12 +46,16 @@
  *
  * The approach is to create an IPv6 socket and bind it to a BIO.
  */
-#if defined XR_ENABLE_IPv6
-#  if !defined WIN32 && OPENSSL_VERSION_NUMBER < 0x10000000L
-#    define XR_CHECK_IPV6
-#  endif
+
+#if !defined WIN32 && OPENSSL_VERSION_NUMBER < 0x10000000L
+#  define XR_CHECK_IPV6
 #endif
 
+/*
+ * OpenSSL 1.0.0 should handle client IPv6 cnnections in BIO, but it still
+ * doesn't work. Because of that there is hard switch which turns on
+ * extern IPv6 socket creation.
+ */
 #define XR_CHECK_IPV6
 
 struct _xr_client_conn
