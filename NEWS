@@ -1,3 +1,11 @@
+1.0.1 - 2010-02-25
+~~~~~~~~~~~~~~~~~~
+- Fixed IPv6 support by Vaclav Sajdl
+- Multiple server support added
+- Multiple listen interfaces
+- Added IPv6 support for client
+- OpenSSL dependencies fixed
+
 1.0 - 2009-09-17
 ~~~~~~~~~~~~~~~~
 - Added timeout.

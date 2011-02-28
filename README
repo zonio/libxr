@@ -11,7 +11,7 @@ Libxr features:
   - Server "session" support for non-persistent connections
   - Multi-platform support (Linux, Windows, ...)
   - SSLv3/TLSv1 using OpenSSL
-  - IPV6 as soon as OpenSSL 0.9.9 is released
+  - IPV6 support
   - VALA language support for client interfaces
   - Multiple interfaces per server
 
