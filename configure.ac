@@ -26,8 +26,8 @@ AC_SUBST(LIB_XR_VERSION)
 # check for dependencies
 AC_CHECK_PROG(RE2C, re2c, yes, no)
 
-if test RE2C = no; then
-  AC_MSG_ERROR([re2c is required],1)
+if test $RE2C = "no"; then
+  AC_MSG_ERROR([re2c not found],1)
 fi
 
 GLIB_REQUIRES="glib-2.0 >= 2.12.0 gthread-2.0 >= 2.12.0"
