@@ -1,8 +1,12 @@
-Multi-transport RPC client/server library
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ABOUT
+-----
+Libxr is universal RPC over HTTP library with support for XML-RPC 
+and a subset of JSON-RPC. It supports persistent HTTP connection, SSL 
+transport layer and comes with interface description language and 
+client/server code compiler.
 
-Libxr is a library that allows for rapid implementation of RPC clients and
-servers in C.
+Libxr is a library that allows for rapid implementation of RPC clients 
+and servers in C.
 
 Libxr features:
   - Multiple RPC transports. (XML-RPC and JSON-RPC)
@@ -32,5 +36,13 @@ implement complex RPC interfaces in a very short time. Here is an obligatory
 Whenever you call XTest.sayHello() RPC method, "Hello World!" will be printed to
 the server's standard output.
 
-For more information see HOWTO tutorial, libxr API documentation or tests/
-directory.
+MORE INFORMATION
+----------------
+For more information see HOWTO tutorial, libxr API documentation, tests/
+directory or visit wiki at http://zonio.net/wiki.
+
+CONTRIBUTE
+----------
+If you have any bug fixes, patches, new functionality etc. please send 
+them to developers@zonio.net.
+
