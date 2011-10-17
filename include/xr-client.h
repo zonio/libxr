@@ -37,16 +37,23 @@
 #include "xr-http.h"
 #include "xr-value-utils.h"
 
+/**
+ * Wrapper for g_set_error
+ */
 #define XR_CLIENT_ERROR xr_client_error_quark()
+
+/**
+ * Wrapper for g_set_error
+ */
 #define XR_REMOTE_SERVER_ERROR xr_remote_server_error_quark()
 
 typedef enum
 {
-  XR_CLIENT_ERROR_MARCHALIZER,
-  XR_CLIENT_ERROR_CLOSED,
-  XR_CLIENT_ERROR_CONNECT,
-  XR_CLIENT_ERROR_IO,
-  XR_CLIENT_ERROR_FAILED
+  XR_CLIENT_ERROR_MARCHALIZER,  /**< Call passing argument failed */
+  XR_CLIENT_ERROR_CLOSED,       /**< Connection has been closed */
+  XR_CLIENT_ERROR_CONNECT,      /**< Connection error */
+  XR_CLIENT_ERROR_IO,           /**< Recieving error */
+  XR_CLIENT_ERROR_FAILED        /**< Default client error */
 } XRClientError;
 
 G_BEGIN_DECLS
@@ -67,7 +74,7 @@ xr_client_conn* xr_client_new(GError** err);
  *
  * This can be used for custom SSL setup.
  * 
- * @param server Server object.
+ * @param conn Connection object.
  * 
  * @return SSL_CTX pointer owned by the xr_server.
  */
@@ -153,8 +160,14 @@ void xr_client_close(xr_client_conn* conn);
  */
 gboolean xr_client_call(xr_client_conn* conn, xr_call* call, GError** err);
 
+/**
+ * Returns client error message
+ */
 GQuark xr_client_error_quark();
 
+/**
+ * Returns server error message
+ */
 GQuark xr_remote_server_error_quark();
 
 G_END_DECLS
