@@ -45,11 +45,11 @@
  * version lower than 1.0.0, we must setup IPv6 socket ourself.
  *
  * The approach is to create an IPv6 socket and bind it to a BIO.
- */
-
+*//*
 #if !defined WIN32 && OPENSSL_VERSION_NUMBER < 0x10000000L
 #  define XR_CHECK_IPV6
 #endif
+*/
 
 /*
  * OpenSSL 1.0.0 should handle client IPv6 cnnections in BIO, but it still
@@ -319,7 +319,11 @@ gboolean xr_client_open(xr_client_conn* conn, const char* uri, GError** err)
     else sock = xr_client_new_sock_ipv6(err, NULL, p);
 
     g_free(h);
-    if (sock < 0) break;
+   
+    if (sock < 0) {
+      g_clear_error(err);
+      break;
+    }
 
     BIO_set_fd(conn->bio, sock, BIO_CLOSE);
     
