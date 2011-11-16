@@ -319,7 +319,7 @@ gboolean xr_client_open(xr_client_conn* conn, const char* uri, GError** err)
     else sock = xr_client_new_sock_ipv6(err, NULL, p);
 
     g_free(h);
-    if (sock < 0) return FALSE;
+    if (sock < 0) break;
 
     BIO_set_fd(conn->bio, sock, BIO_CLOSE);
     
