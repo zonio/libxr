@@ -205,11 +205,8 @@ void xr_client_close(xr_client_conn* conn)
 
   xr_http_free(conn->http);
   conn->http = NULL;
-  if (conn->client)
-    g_object_unref(conn->client);
   if (conn->conn)
     g_object_unref(conn->conn);
-  conn->client = NULL;
   conn->conn = NULL;
   conn->is_open = FALSE;
 }
@@ -309,6 +306,8 @@ void xr_client_free(xr_client_conn* conn)
   if (conn == NULL)
     return;
 
+  if (conn->client)
+    g_object_unref(conn->client);
   xr_client_close(conn);
   g_free(conn->host);
   g_free(conn->resource);
