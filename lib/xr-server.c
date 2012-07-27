@@ -657,7 +657,7 @@ gboolean xr_server_register_servlet(xr_server* server, xr_servlet_def* servlet)
   return TRUE;
 }
 
-xr_server* xr_server_new(const char* cert, int threads, GError** err)
+xr_server* xr_server_new(const char* cert, const char* privkey, int threads, GError** err)
 {
   xr_trace(XR_DEBUG_SERVER_TRACE, "(cert=%s, threads=%d, err=%p)", cert, threads, err);
   GError* local_err = NULL;
@@ -674,7 +674,8 @@ xr_server* xr_server_new(const char* cert, int threads, GError** err)
 
   if (cert)
   {
-    server->cert = g_tls_certificate_new_from_file(cert, &local_err);
+    server->cert = privkey ? g_tls_certificate_new_from_files(cert, privkey, &local_err)
+                           : g_tls_certificate_new_from_file(cert, &local_err);
     if (local_err)
     {
       g_propagate_prefixed_error(err, local_err, "Certificate load failed: ");
@@ -799,7 +800,7 @@ static void _sh(int signum)
   xr_server_stop(server);
 }
 
-gboolean xr_server_simple(const char* cert, int threads, const char* bind, xr_servlet_def** servlets, GError** err)
+gboolean xr_server_simple(const char* cert, const char* privkey, int threads, const char* bind, xr_servlet_def** servlets, GError** err)
 {
   if (!g_thread_supported())
     g_thread_init(NULL);
@@ -821,7 +822,7 @@ gboolean xr_server_simple(const char* cert, int threads, const char* bind, xr_se
     return FALSE;
 #endif
 
-  server = xr_server_new(cert, threads, err);
+  server = xr_server_new(cert, privkey, threads, err);
   if (server == NULL)
     return FALSE;
 
