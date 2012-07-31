@@ -106,14 +106,16 @@ G_BEGIN_DECLS
 
 /** Create new server object.
  *
- * @param cert Combined PEM file with server certificate and private
- *   key. Use NULL to create non-secure server.
+ * @param cert PEM file with server certificate or combined PEM file with
+ * certificate and private key. Use NULL to create non-secure server.
+ * @param privkey File with private key to certificate. Use NULL when
+ * certificate doesn't use key or when key is with certificate in one file.
  * @param threads Number of the threads in the pool.
  * @param err Pointer to the variable to store error to on error.
  *
  * @return New server object on success.
  */
-xr_server* xr_server_new(const char* cert, int threads, GError** err);
+xr_server* xr_server_new(const char* cert, const char* privkey, int threads, GError** err);
 
 /** Bind to the specified host/port.
  *
@@ -186,6 +188,8 @@ char* xr_servlet_get_client_ip(xr_servlet* servlet);
 /** Use this function as a simple way to quickly start a server.
  *
  * @param cert Combined PEM file with server certificate and private.
+ * @param privkey File with private key to certificate. Use NULL when
+ * certificate doesn't use key or when key is with certificate in one file.
  * @param threads Number of threads in the pool.
  * @param bind Port and IP address to bind to.
  * @param servlets Servlet definition objects array (NULL termianted).
@@ -193,8 +197,8 @@ char* xr_servlet_get_client_ip(xr_servlet* servlet);
  *
  * @return Function returns FALSE on error, TRUE on success.
  */
-gboolean xr_server_simple(const char* cert, int threads, const char* bind,
-  xr_servlet_def** servlets, GError** err);
+gboolean xr_server_simple(const char* cert, const char* privkey, 
+  int threads, const char* bind, xr_servlet_def** servlets, GError** err);
 
 GQuark xr_server_error_quark();
 
