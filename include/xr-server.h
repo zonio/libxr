@@ -1,20 +1,20 @@
-/*
- * Libxr.
+/* 
+ * Copyright 2006-2008 Ondrej Jirman <ondrej.jirman@zonio.net>
+ * 
+ * This file is part of libxr.
  *
- * Copyright (C) 2008-2010 Zonio s.r.o <developers@zonio.net>
+ * Libxr is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation, either version 2 of the License, or (at your option) any
+ * later version.
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Libxr is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+ * details.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with libxr.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 /** @file xr-server.h
@@ -27,7 +27,6 @@
 #ifndef __XR_SERVER_H__
 #define __XR_SERVER_H__
 
-#include <openssl/ssl.h>
 #include "xr-call.h"
 #include "xr-http.h"
 #include "xr-value-utils.h"
@@ -107,29 +106,21 @@ G_BEGIN_DECLS
 
 /** Create new server object.
  *
- * @param cert Combined PEM file with server certificate and private
- *   key. Use NULL to create non-secure server.
+ * @param cert PEM file with server certificate or combined PEM file with
+ * certificate and private key. Use NULL to create non-secure server.
+ * @param privkey File with private key to certificate. Use NULL when
+ * certificate doesn't use key or when key is with certificate in one file.
  * @param threads Number of the threads in the pool.
  * @param err Pointer to the variable to store error to on error.
  *
  * @return New server object on success.
  */
-xr_server* xr_server_new(const char* cert, int threads, GError** err);
-
-/** Get SSL context used by the server.
- *
- * This can be used for custom SSL setup.
- * 
- * @param server Server object.
- * 
- * @return SSL_CTX pointer owned by the xr_server.
- */
-SSL_CTX* xr_server_get_ssl_context(xr_server* server);
+xr_server* xr_server_new(const char* cert, const char* privkey, int threads, GError** err);
 
 /** Bind to the specified host/port.
  *
  * @param server Server object.
- * @param port Port and IP address to bind to.
+ * @param port Port and IP address to bind to. (*:1234, 127.0.0.1:1234)
  * @param err Pointer to the variable to store error to on error.
  *
  * @return Function returns FALSE on error, TRUE on success.
@@ -197,6 +188,8 @@ char* xr_servlet_get_client_ip(xr_servlet* servlet);
 /** Use this function as a simple way to quickly start a server.
  *
  * @param cert Combined PEM file with server certificate and private.
+ * @param privkey File with private key to certificate. Use NULL when
+ * certificate doesn't use key or when key is with certificate in one file.
  * @param threads Number of threads in the pool.
  * @param bind Port and IP address to bind to.
  * @param servlets Servlet definition objects array (NULL termianted).
@@ -204,8 +197,8 @@ char* xr_servlet_get_client_ip(xr_servlet* servlet);
  *
  * @return Function returns FALSE on error, TRUE on success.
  */
-gboolean xr_server_simple(const char* cert, int threads, const char* bind,
-  xr_servlet_def** servlets, GError** err);
+gboolean xr_server_simple(const char* cert, const char* privkey, 
+  int threads, const char* bind, xr_servlet_def** servlets, GError** err);
 
 GQuark xr_server_error_quark();
 

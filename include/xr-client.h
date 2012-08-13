@@ -1,20 +1,20 @@
-/*
- * Libxr.
+/* 
+ * Copyright 2006-2008 Ondrej Jirman <ondrej.jirman@zonio.net>
+ * 
+ * This file is part of libxr.
  *
- * Copyright (C) 2008-2010 Zonio s.r.o <developers@zonio.net>
+ * Libxr is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation, either version 2 of the License, or (at your option) any
+ * later version.
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Libxr is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+ * details.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with libxr.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 /** @file xr-client.h
@@ -32,28 +32,19 @@
 #ifndef __XR_CLIENT_H__
 #define __XR_CLIENT_H__
 
-#include <openssl/ssl.h>
 #include "xr-call.h"
 #include "xr-http.h"
 #include "xr-value-utils.h"
 
-/**
- * Wrapper for g_set_error
- */
 #define XR_CLIENT_ERROR xr_client_error_quark()
-
-/**
- * Wrapper for g_set_error
- */
-#define XR_REMOTE_SERVER_ERROR xr_remote_server_error_quark()
 
 typedef enum
 {
-  XR_CLIENT_ERROR_MARCHALIZER,  /**< Call passing argument failed */
-  XR_CLIENT_ERROR_CLOSED,       /**< Connection has been closed */
-  XR_CLIENT_ERROR_CONNECT,      /**< Connection error */
-  XR_CLIENT_ERROR_IO,           /**< Recieving error */
-  XR_CLIENT_ERROR_FAILED        /**< Default client error */
+  XR_CLIENT_ERROR_MARCHALIZER,
+  XR_CLIENT_ERROR_CLOSED,
+  XR_CLIENT_ERROR_CONNECT,
+  XR_CLIENT_ERROR_IO,
+  XR_CLIENT_ERROR_FAILED
 } XRClientError;
 
 G_BEGIN_DECLS
@@ -69,16 +60,6 @@ typedef struct _xr_client_conn xr_client_conn;
  * @return New connection object.
  */
 xr_client_conn* xr_client_new(GError** err);
-
-/** Get SSL context used by the client.
- *
- * This can be used for custom SSL setup.
- * 
- * @param conn Connection object.
- * 
- * @return SSL_CTX pointer owned by the xr_server.
- */
-SSL_CTX* xr_client_get_ssl_context(xr_client_conn* conn);
 
 /** Free connection object. This function calls @ref xr_client_close if
  * necessary.
@@ -160,15 +141,7 @@ void xr_client_close(xr_client_conn* conn);
  */
 gboolean xr_client_call(xr_client_conn* conn, xr_call* call, GError** err);
 
-/**
- * Returns client error message
- */
 GQuark xr_client_error_quark();
-
-/**
- * Returns server error message
- */
-GQuark xr_remote_server_error_quark();
 
 G_END_DECLS
 

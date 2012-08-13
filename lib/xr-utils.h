@@ -1,34 +1,30 @@
-/*
- * Libxr.
+/* 
+ * Copyright 2006-2008 Ondrej Jirman <ondrej.jirman@zonio.net>
+ * 
+ * This file is part of libxr.
  *
- * Copyright (C) 2008-2010 Zonio s.r.o <developers@zonio.net>
+ * Libxr is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation, either version 2 of the License, or (at your option) any
+ * later version.
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Libxr is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+ * details.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with libxr.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifndef __XR_UTILS_H__
 #define __XR_UTILS_H__
 
-#include <glib.h>
-#include <openssl/bio.h>
-#include <openssl/ssl.h>
-#include <openssl/err.h>
+#include <gio/gio.h>
 
 /** @file xr_utils Header
  */
 
-void xr_set_nodelay(BIO* bio);
-const char* xr_get_bio_error_string();
+void xr_set_nodelay(GSocket* sock);
 
 #endif

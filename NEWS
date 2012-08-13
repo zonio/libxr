@@ -1,21 +1,13 @@
-1.0.1 - 2010-02-25
+2.0.0 - 2012-04-06
 ~~~~~~~~~~~~~~~~~~
-- Fixed IPv6 support by Vaclav Sajdl
-- Multiple server support added
-- Multiple listen interfaces
-- Added IPv6 support for client
-- OpenSSL dependencies fixed
 
-1.0 - 2009-09-17
-~~~~~~~~~~~~~~~~
-- Added timeout.
-- Changed error values returned from BIO_xgets.
-- Added IPv6 support by David Lee.
-- Changed domain number for errors returned from server.
+NOTE: This release is incompatible with libxr version 1.0
 
-0.99 - 2009-02-16
-~~~~~~~~~~~~~~~~~~
-- Fix some small bugs
+- Ported to Gio/GSocket
+- Support array<double>, array<int> (on 64bit platform)
+  - Use GArray instead of GSList for array<> type
+  - Generate array<> manipukation helper methods
+- Fixed: Session cleaner not calling fini() servlet method
 
 0.9.97 - 2008-10-16 (1.0.0-rc8)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

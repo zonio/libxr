@@ -25,6 +25,7 @@ EXTRA_DIST = \
   bench.sh \
   test.xdl \
   server.pem \
+  $(BUILT_SOURCES) \
   zblok/build.sh \
   zblok/client.c \
   zblok/server.c \
@@ -34,7 +35,7 @@ EXTRA_DIST = \
   vala/test.vala \
   vala/test.xdl
 
-AM_CFLAGS= \
+AM_CFLAGS = \
   $(GLIB_CFLAGS) \
   $(XML_CFLAGS) \
   $(JSON_CFLAGS) \

@@ -1,20 +1,20 @@
-/*
- * Libxr.
+/* 
+ * Copyright 2006-2008 Ondrej Jirman <ondrej.jirman@zonio.net>
+ * 
+ * This file is part of libxr.
  *
- * Copyright (C) 2008-2010 Zonio s.r.o <developers@zonio.net>
+ * Libxr is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation, either version 2 of the License, or (at your option) any
+ * later version.
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Libxr is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+ * details.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with libxr.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 /** @file xr-call.h
@@ -145,12 +145,6 @@ xr_value* xr_call_get_retval(xr_call* call);
  * @param msg Error message.
  */
 void xr_call_set_error(xr_call* call, int code, const char* msg, ...);
-
-/** Check whether the XML-RPC error structure is set
-  *
-  * @param call Call obejct.
-  */
-gboolean xr_call_error_set(xr_call* call);
 
 /** Get error code that is set on the call object.
  *

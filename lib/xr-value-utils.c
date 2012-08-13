@@ -1,20 +1,23 @@
-/*
- * Libxr.
+/* 
+ * Copyright 2006-2008 Ondrej Jirman <ondrej.jirman@zonio.net>
+ * 
+ * This file is part of libxr.
  *
- * Copyright (C) 2008-2010 Zonio s.r.o <developers@zonio.net>
+ * Libxr is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation, either version 2 of the License, or (at your option) any
+ * later version.
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Libxr is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+ * details.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with libxr.  If not, see <http://www.gnu.org/licenses/>.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * Author: David Lee <live4thee@gmail.com> (2007-12-27)
+ * Small cleanups by Ondrej Jirman <ondrej.jirman@zonio.net>.
  */
 
 #include <string.h>
@@ -144,9 +147,6 @@ static xr_value* xr_value_fmt_build_value(const char** const fmt, va_list* args,
 
      case 's':
        value = xr_value_string_new(va_arg(*args, char *));
-       break;
-     case 't':	
-       value = xr_value_time_new(va_arg(*args, char *));
        break;
 
      case 'S':
@@ -382,16 +382,6 @@ static gboolean xr_value_fmt_parse_value(xr_value* value, const char** const fmt
          return FALSE;
      }
        break;
-
-      case 't':
-      {
-        char **nval = va_arg(*args, char **);
-        if (nval == NULL)
-          return FALSE;
-        if (!xr_value_to_time(value, nval))
-          return FALSE;
-      }
-        break;
 
      case 's':
      {

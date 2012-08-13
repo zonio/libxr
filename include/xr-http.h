@@ -1,27 +1,27 @@
-/*
- * Libxr.
+/* 
+ * Copyright 2006-2008 Ondrej Jirman <ondrej.jirman@zonio.net>
+ * 
+ * This file is part of libxr.
  *
- * Copyright (C) 2008-2010 Zonio s.r.o <developers@zonio.net>
+ * Libxr is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation, either version 2 of the License, or (at your option) any
+ * later version.
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Libxr is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+ * details.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with libxr.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifndef __XR_HTTP_H__
 #define __XR_HTTP_H__
 
 #include <glib.h>
-#include <openssl/bio.h>
+#include <gio/gio.h>
 
 /** @file xr-http.h
  *
@@ -57,7 +57,7 @@ typedef enum {
 
 typedef enum
 {
-  XR_HTTP_ERROR_FAILED = 1
+  XR_HTTP_ERROR_FAILED
 } XRHttpError;
 
 G_BEGIN_DECLS
@@ -68,11 +68,11 @@ void xr_http_init();
 
 /** Create new HTTP transport object.
  * 
- * @param bio OpenSSL BIO object used as underlaying transport.
+ * @param stream GIOStream object used for HTTP connection.
  * 
  * @return New HTTP transport object.
  */
-xr_http* xr_http_new(BIO* bio);
+xr_http* xr_http_new(GIOStream* stream);
 
 /** Destroy HTTP transport object.
  * 
@@ -289,15 +289,6 @@ gboolean xr_http_write_all(xr_http* http, const char* buffer, gssize length, GEr
  * @return TRUE if ready.
  */
 gboolean xr_http_is_ready(xr_http* http);
-
-/** Check if object has pending request to be read within given time.
- * 
- * @param http HTTP transport object. 
- * @param timeout The timeout value (in second) for waiting incoming request.
- * 
- * @return TRUE if ready.
- */
-gboolean xr_http_has_pending_request(xr_http* http, time_t timeout);
 
 GQuark xr_http_error_quark();
 
