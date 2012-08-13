@@ -21,6 +21,8 @@
 #include <time.h>
 #include <string.h>
 
+#include "gio.h"
+
 #include "xr-server.h"
 #include "xr-http.h"
 #include "xr-utils.h"

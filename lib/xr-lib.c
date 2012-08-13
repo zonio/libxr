@@ -43,6 +43,8 @@ void _xr_debug(const char* loc, const char* fmt, ...)
 
 G_LOCK_DEFINE_STATIC(init);
 
+void xr_g_tls_init ();
+
 void xr_init()
 {
   g_type_init();
@@ -52,6 +54,7 @@ void xr_init()
 
   G_LOCK(init);
 
+  xr_g_tls_init();
   xr_http_init();
 
   G_UNLOCK(init);
