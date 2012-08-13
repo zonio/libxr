@@ -26,7 +26,7 @@ AC_SUBST(LIB_XR_VERSION)
 # check for dependencies
 AC_CHECK_PROG(RE2C, re2c, re2c)
 
-GLIB_REQUIRES="glib-2.0 >= 2.30.0 gthread-2.0 >= 2.30.0 gio-2.0 >= 2.30.0"
+GLIB_REQUIRES="glib-2.0 >= 2.22.5 gthread-2.0 >= 2.22.5 gio-2.0 >= 2.22.5 gio-unix-2.0 >= 2.22.5"
 XML_REQUIRES="libxml-2.0 >= 2.6.20"
 JSON_REQUIRES="json >= 0.3"
 
@@ -79,6 +79,43 @@ AS_IF([test "x$have_json" = "xyes"], [
 #endif
 _______EOF
 ])
+
+PKG_CHECK_MODULES(LIBFFI, [libffi >= 3.0.0])
+AC_SUBST(LIBFFI_CFLAGS)
+AC_SUBST(LIBFFI_LIBS)
+
+# from glib-networking-2.30.2
+
+dnl *****************************
+dnl *** Checks for GNUTLS     ***
+dnl *****************************
+PKG_CHECK_MODULES(GNUTLS, [gnutls >= 2.1.7])
+AC_SUBST(GNUTLS_CFLAGS)
+AC_SUBST(GNUTLS_LIBS)
+AM_PATH_LIBGCRYPT([])
+
+AC_MSG_CHECKING([location of system Certificate Authority list])
+AC_ARG_WITH(ca-certificates,
+[AC_HELP_STRING([--with-ca-certificates=@<:@path@:>@],
+[path to system Certificate Authority list])])
+if test "$with_ca_certificates" = "no"; then
+    AC_MSG_RESULT([disabled])
+else
+    if test -z "$with_ca_certificates"; then
+    for f in /etc/pki/tls/certs/ca-bundle.crt \
+             /etc/ssl/certs/ca-certificates.crt; do
+    if test -f "$f"; then
+	with_ca_certificates="$f"
+    fi
+    done
+    if test -z "$with_ca_certificates"; then
+    AC_MSG_ERROR([could not find. Use --with-ca-certificates=path to set, or --without-ca-certificates to disable])
+    fi
+    fi
+
+    AC_MSG_RESULT($with_ca_certificates)
+    AC_DEFINE_UNQUOTED(GTLS_SYSTEM_CA_FILE, ["$with_ca_certificates"], [The system TLS CA list])
+fi
 
 # write output
 AC_CONFIG_FILES([

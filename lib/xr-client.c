@@ -21,6 +21,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "gio.h"
+
 #include "xr-client.h"
 #include "xr-http.h"
 #include "xr-utils.h"
@@ -124,22 +126,44 @@ gboolean xr_client_open(xr_client_conn* conn, const char* uri, GError** err)
     return FALSE;
   }
 
-  // enable/disable TLS
-  if (conn->secure)
-  {
-    g_socket_client_set_tls(conn->client, TRUE);
-    g_socket_client_set_tls_validation_flags(conn->client, G_TLS_CERTIFICATE_VALIDATE_ALL & ~G_TLS_CERTIFICATE_UNKNOWN_CA & ~G_TLS_CERTIFICATE_BAD_IDENTITY);
-  }
-  else
-  {
-    g_socket_client_set_tls(conn->client, FALSE);
-  }
-
   conn->conn = g_socket_client_connect_to_host(conn->client, conn->host, 80, NULL, &local_err);
   if (local_err)
   {
     g_propagate_prefixed_error(err, local_err, "Connection failed: ");
     return FALSE;
+  }
+
+  if (conn->secure)
+  {
+    GIOStream *tlsconn;
+    GSocketConnectable *connectable;
+
+    connectable = g_network_address_parse (conn->host, 80, &local_err);
+
+    tlsconn = g_tls_client_connection_new (conn->conn, connectable, &local_err);
+    g_object_unref (conn->conn);
+    conn->conn = tlsconn;
+
+    g_object_unref (connectable);
+
+    if (local_err)
+    {
+      g_propagate_prefixed_error (err, local_err, "Connection failed: ");
+      return FALSE;
+    }
+
+    if (tlsconn)
+    {
+      g_tls_client_connection_set_validation_flags (G_TLS_CLIENT_CONNECTION (tlsconn), G_TLS_CERTIFICATE_VALIDATE_ALL & ~G_TLS_CERTIFICATE_UNKNOWN_CA & ~G_TLS_CERTIFICATE_BAD_IDENTITY);
+
+      if (!g_tls_connection_handshake (G_TLS_CONNECTION (tlsconn), NULL, &local_err))
+      {
+        g_object_unref (tlsconn);
+        conn->conn = NULL;
+        g_propagate_prefixed_error (err, local_err, "Connection failed: ");
+        return FALSE;
+      }
+    }
   }
 
   xr_set_nodelay(g_socket_connection_get_socket(conn->conn));

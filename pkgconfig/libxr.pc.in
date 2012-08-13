@@ -8,5 +8,5 @@ Description: XR library
 Version: @VERSION@
 Requires: @GLIB_REQUIRES@
 Requires.private: @XML_REQUIRES@ @JSON_REQUIRES@
-Libs: -L${libdir} -lxr
+Libs: -L${libdir} -lxr @GNUTLS_LIBS@ @LIBGCRYPT_LIBS@
 Cflags: -I${includedir}/libxr
