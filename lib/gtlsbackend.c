@@ -167,6 +167,55 @@ g_socket_output_stream_pollable_iface_init (GPollableOutputStreamInterface *ifac
 /*  iface->write_nonblocking = g_socket_output_stream_pollable_write_nonblocking;*/
 }
 
+#include <sys/types.h>
+#include <sys/socket.h>
+
+static GType gsis_t = 0, gsos_t = 0;
+
+static void
+discover_gsios_t ()
+{
+  /* Somehow in CentOS glib cannot link G_TYPE_SOCKET_INPUT/OUTPUT_STREAM,
+     so we will get those types this way.  */
+
+  GSocket *s;
+  GIOStream *c;
+  int sv[2];
+
+  socketpair (AF_UNIX, SOCK_STREAM, 0, sv);
+
+  s = G_SOCKET (g_object_new (G_TYPE_SOCKET, "fd", sv[0], "family", G_SOCKET_FAMILY_IPV4, "type", G_SOCKET_TYPE_STREAM, NULL));
+  c = G_IO_STREAM (g_object_new (G_TYPE_SOCKET_CONNECTION, "socket", s, NULL));
+
+  gsis_t = G_OBJECT_TYPE (g_io_stream_get_input_stream (c));
+  gsos_t = G_OBJECT_TYPE (g_io_stream_get_output_stream (c));
+
+  g_object_unref (c);
+
+  g_socket_close (s, NULL);
+  g_object_unref (s);
+
+  close (sv[1]);
+}
+
+GType
+xr_g_socket_input_stream_get_type ()
+{
+  if (!gsis_t)
+    discover_gsios_t ();
+
+  return gsis_t;
+}
+
+GType
+xr_g_socket_output_stream_get_type ()
+{
+  if (!gsos_t)
+    discover_gsios_t ();
+
+  return gsos_t;
+}
+
 void
 xr_g_tls_init ()
 {

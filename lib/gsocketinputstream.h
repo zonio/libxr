@@ -23,7 +23,7 @@
 
 G_BEGIN_DECLS
 
-#define G_TYPE_SOCKET_INPUT_STREAM                          (_g_socket_input_stream_get_type ())
+#define G_TYPE_SOCKET_INPUT_STREAM                          (xr_g_socket_input_stream_get_type ())
 #define G_SOCKET_INPUT_STREAM(inst)                         (G_TYPE_CHECK_INSTANCE_CAST ((inst),                     \
                                                              G_TYPE_SOCKET_INPUT_STREAM, GSocketInputStream))
 #define G_SOCKET_INPUT_STREAM_CLASS(class)                  (G_TYPE_CHECK_CLASS_CAST ((class),                       \
@@ -50,7 +50,7 @@ struct _GSocketInputStream
   GSocketInputStreamPrivate *priv;
 };
 
-GType                   _g_socket_input_stream_get_type                  (void) G_GNUC_CONST;
+GType                   xr_g_socket_input_stream_get_type               (void) G_GNUC_CONST;
 GSocketInputStream *    _g_socket_input_stream_new                      (GSocket *socket);
 
 G_END_DECLS
