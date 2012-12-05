@@ -750,6 +750,7 @@ gboolean xr_server_bind(xr_server* server, const char* bind_addr, GError** err)
     {
       g_error_new(XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "Invalid address: %s", bind_addr);
       g_free(addr);
+      xr_server_stop(server);
       return FALSE;
     }
       
@@ -762,6 +763,7 @@ gboolean xr_server_bind(xr_server* server, const char* bind_addr, GError** err)
   if (local_err)
   {
     g_propagate_prefixed_error(err, local_err, "Port listen failed: ");
+    xr_server_stop(server);
     return FALSE;
   }
 
