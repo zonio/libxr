@@ -24,7 +24,10 @@ LIB_XR_VERSION=2:0:0
 AC_SUBST(LIB_XR_VERSION)
 
 # check for dependencies
-AC_CHECK_PROG(RE2C, re2c, re2c)
+AC_CHECK_PROG(RE2C, re2c, "yes")
+if test "x$RE2C" != "xyes" ; then
+  AC_MSG_ERROR([re2c not found.])
+fi
 
 GLIB_REQUIRES="glib-2.0 >= 2.30.0 gthread-2.0 >= 2.30.0 gio-2.0 >= 2.30.0"
 XML_REQUIRES="libxml-2.0 >= 2.6.20"
