@@ -188,6 +188,8 @@ servlet Test1
   <%
     int i;
 
+    g_usleep(1000*1000*60);
+
     retval = Array_string_new();
     for (i = 0; i < 5000; i++)
       Array_string_add(retval, g_strdup_printf("user.bob%d@zonio.net", i));
@@ -310,11 +312,30 @@ servlet Test1
   %>
 }
 
+struct QueryResult
+{
+  boolean success;
+  int err_code;
+  string err_msg;
+  string response;
+}
+
 servlet Test2
 {
   <%
 #include <stdio.h>
 #include <string.h>
+#include <curl/curl.h>
+
+#include "jobs.h"
+
+static size_t curl_append_gstring(void *buffer, size_t size, size_t nmemb, GString *str)
+{
+  if (size * nmemb > 0)
+    g_string_append_len(str, buffer, size * nmemb);
+
+  return nmemb;
+}
   %>
 
   __attrs__
@@ -325,25 +346,124 @@ servlet Test2
   
   __init__
   <%
-    printf("Init AUTH Servlet!\n");
-    printf("Accepted connection from: %s\n", xr_servlet_get_client_ip(_servlet));
+    jobs_init();
+
+    //printf("Init AUTH Servlet!\n");
+    //printf("Accepted connection from: %s\n", xr_servlet_get_client_ip(_servlet));
   %>
 
   __fini__
   <%
-    printf("Fini AUTH Servlet!\n");
+    //printf("Fini AUTH Servlet!\n");
   %>
 
   boolean auth(take string name, take string password)
   <%
-    printf("AUTH-PRE:  %s, %s\n", _priv->username, _priv->password);
+    //printf("AUTH-PRE:  %s, %s\n", _priv->username, _priv->password);
     _priv->username = name;
     _priv->password = password;
-    printf("AUTH-POST: %s, %s\n", _priv->username, _priv->password);
+    //printf("AUTH-POST: %s, %s\n", _priv->username, _priv->password);
   %>
 
   string getUsername()
   <%
     return g_strdup(_priv->username);
+  %>
+
+  // query demo
+
+  error FAIL = 1;
+  error AGAIN = 2;
+
+  // download URL from the web server using CURL
+  string serverCall(string url)
+  <%
+    CURL *curl;
+
+    g_printerr("CURL Download Started %p: %s\n", _priv, url);
+
+    curl = curl_easy_init();
+    g_assert(curl != NULL);
+
+    GString* body = g_string_sized_new(1024);
+
+    curl_easy_setopt(curl, CURLOPT_URL, url);
+    curl_easy_setopt(curl, CURLOPT_VERBOSE, 0L);
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, (curl_write_callback)curl_append_gstring);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, body);
+
+    CURLcode res = curl_easy_perform(curl);
+    if (res == CURLE_OK)
+    {
+      glong http_code = 0;
+      curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+      curl_easy_cleanup(curl);
+
+      if (http_code == 200)
+      {
+        g_printerr("CURL Download Done %p\n", _priv);
+        return g_string_free(body, FALSE);
+      }
+      else
+        g_set_error(_error, 1, T_XMLRPC_ERROR_TEST2_FAIL, "Invalid HTTP response code = %d\n", http_code);
+    }
+    else
+      g_set_error(_error, 1, T_XMLRPC_ERROR_TEST2_FAIL, "Curl failed: %s\n", curl_easy_strerror(res));
+
+    curl_easy_cleanup(curl);
+
+    g_printerr("CURL Download Done %p\n", _priv);
+  %>
+
+  // call remote server's serverCall to download URL
+  string query(string url)
+  <%
+    gchar* response = do_query(url);
+
+    if (response == NULL)
+      g_set_error(_error, 1, T_XMLRPC_ERROR_TEST2_FAIL, "Query failed!");
+
+    return response;
+  %>
+  
+  // the same as above, but use pollable implementation
+  int startQuery(string url)
+  <%
+    g_print("Starting job %p\n", _priv);
+    return jobs_start_job(url);
+  %>
+
+  QueryResult completeQuery(int query_id)
+  <%
+    if (jobs_job_exists(query_id))
+    {
+      if (jobs_is_job_done(query_id))
+      {
+        g_print("Job done %p\n", _priv);
+
+        retval = TQueryResult_new();
+
+        if (jobs_job_failed(query_id))
+        {
+          retval->success = FALSE;
+          retval->err_code = 1;
+          retval->err_msg = g_strdup("Query failed because ...");
+        }
+        else
+        {
+          retval->success = TRUE;
+          retval->response = jobs_get_job_result(query_id);
+        }
+
+        jobs_job_close(query_id);
+      }
+      else
+        g_set_error(_error, 1, T_XMLRPC_ERROR_TEST2_AGAIN, "Query is not complete, yet!");
+    }
+    else
+      g_set_error(_error, 1, T_XMLRPC_ERROR_TEST2_FAIL, "Job doesn't exist");
   %>
 }
