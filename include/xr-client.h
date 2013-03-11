@@ -115,6 +115,13 @@ void xr_client_basic_auth(xr_client_conn* conn, const char* username, const char
  */
 xr_http* xr_client_get_http(xr_client_conn* conn);
 
+/** Set socket timeout.
+ * 
+ * @param conn Connection object.
+ * @param timeout Timeout in seconds.
+ */
+void xr_client_set_timeout(xr_client_conn* conn, gint timeout);
+
 /** Open new connection to the server.
  *
  * @param conn Connection object.

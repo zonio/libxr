@@ -157,6 +157,14 @@ gboolean xr_client_open(xr_client_conn* conn, const char* uri, GError** err)
   return TRUE;
 }
 
+void xr_client_set_timeout(xr_client_conn* conn, gint timeout)
+{
+  g_return_if_fail(conn != NULL);
+  g_return_if_fail(timeout > 0);
+
+  g_socket_client_set_timeout(conn->client, timeout);
+}
+
 void xr_client_set_http_header(xr_client_conn* conn, const char* name, const char* value)
 {
   g_return_if_fail(conn != NULL);
@@ -309,9 +317,9 @@ void xr_client_free(xr_client_conn* conn)
   if (conn == NULL)
     return;
 
+  xr_client_close(conn);
   if (conn->client)
     g_object_unref(conn->client);
-  xr_client_close(conn);
   g_free(conn->host);
   g_free(conn->resource);
   g_free(conn->session_id);
