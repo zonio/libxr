@@ -77,7 +77,10 @@ static gboolean _parse_uri(const char* uri, gboolean* secure, char** host, char*
   G_UNLOCK(regex);
 
   if (!g_regex_match(regex, uri, 0, &match_info))
+  {
+    g_match_info_free(match_info);
     return FALSE;
+  }
   
   // check schema
   char* schema = g_match_info_fetch(match_info, 1);
