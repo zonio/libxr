@@ -77,7 +77,10 @@ static gboolean _parse_uri(const char* uri, gboolean* secure, char** host, char*
   G_UNLOCK(regex);
 
   if (!g_regex_match(regex, uri, 0, &match_info))
+  {
+    g_match_info_free(match_info);
     return FALSE;
+  }
   
   // check schema
   char* schema = g_match_info_fetch(match_info, 1);
@@ -152,6 +155,14 @@ gboolean xr_client_open(xr_client_conn* conn, const char* uri, GError** err)
   xr_client_set_http_header(conn, "X-SESSION-ID", conn->session_id);
 
   return TRUE;
+}
+
+void xr_client_set_timeout(xr_client_conn* conn, gint timeout)
+{
+  g_return_if_fail(conn != NULL);
+  g_return_if_fail(timeout > 0);
+
+  g_socket_client_set_timeout(conn->client, timeout);
 }
 
 void xr_client_set_http_header(xr_client_conn* conn, const char* name, const char* value)
@@ -285,7 +296,7 @@ gboolean xr_client_call(xr_client_conn* conn, xr_call* call, GError** err)
   g_string_free(response, TRUE);
   if (!rs)
   {
-    g_set_error(err, 0, xr_call_get_error_code(call), "%s", xr_call_get_error_message(call));
+    g_set_error(err, XR_CLIENT_RPC_ERROR, xr_call_get_error_code(call), "%s", xr_call_get_error_message(call));
 
     if (xr_debug_enabled & XR_DEBUG_CALL)
       xr_call_dump(call, 0);
@@ -306,9 +317,9 @@ void xr_client_free(xr_client_conn* conn)
   if (conn == NULL)
     return;
 
+  xr_client_close(conn);
   if (conn->client)
     g_object_unref(conn->client);
-  xr_client_close(conn);
   g_free(conn->host);
   g_free(conn->resource);
   g_free(conn->session_id);
@@ -318,6 +329,10 @@ void xr_client_free(xr_client_conn* conn)
 
 GQuark xr_client_error_quark()
 {
-  static GQuark quark;
-  return quark ? quark : (quark = g_quark_from_static_string("xr_client_error"));
+  return g_quark_from_static_string("xr_client_error");
+}
+
+GQuark xr_client_rpc_error_quark()
+{
+  return g_quark_from_static_string("xr_client_rpc_error");
 }

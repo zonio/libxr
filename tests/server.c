@@ -19,6 +19,19 @@
 
 #include "TTest1.xrs.h"
 #include "TTest2.xrs.h"
+#include <pthread.h>
+#include <stdio.h>
+
+void dbg(const gchar *string)
+{
+  GDateTime* ts = g_date_time_new_now_local();
+  gchar* tmp = g_date_time_format(ts, "%T");
+  g_date_time_unref(ts);
+
+  printf("%x %s - %s", (gint)pthread_self(), tmp, string);
+
+  g_free(tmp);
+}
 
 int main(int ac, char* av[])
 {
@@ -28,13 +41,13 @@ int main(int ac, char* av[])
     __TTest2Servlet_def(),
     NULL
   };
+  
+  g_set_print_handler(dbg);
+  g_set_printerr_handler(dbg);
 
-  if (!g_thread_supported())
-    g_thread_init(NULL);
+  //xr_debug_enabled = XR_DEBUG_CALL;
 
-  xr_debug_enabled = XR_DEBUG_CALL | XR_DEBUG_ALL;
-
-  xr_server_simple("server.pem", 5, "*:4444", servlets, &err);
+  xr_server_simple("server.pem", 100, "*:4444", servlets, &err);
   if (err)
     g_print("error: %s\n", err->message);
 

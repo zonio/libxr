@@ -657,7 +657,7 @@ gboolean xr_server_register_servlet(xr_server* server, xr_servlet_def* servlet)
   return TRUE;
 }
 
-xr_server* xr_server_new(const char* cert, const char* privkey, int threads, GError** err)
+xr_server* xr_server_new(const char* cert, int threads, GError** err)
 {
   xr_trace(XR_DEBUG_SERVER_TRACE, "(cert=%s, threads=%d, err=%p)", cert, threads, err);
   GError* local_err = NULL;
@@ -674,8 +674,7 @@ xr_server* xr_server_new(const char* cert, const char* privkey, int threads, GEr
 
   if (cert)
   {
-    server->cert = privkey ? g_tls_certificate_new_from_files(cert, privkey, &local_err)
-                           : g_tls_certificate_new_from_file(cert, &local_err);
+    server->cert = g_tls_certificate_new_from_file(cert, &local_err);
     if (local_err)
     {
       g_propagate_prefixed_error(err, local_err, "Certificate load failed: ");
@@ -750,6 +749,7 @@ gboolean xr_server_bind(xr_server* server, const char* bind_addr, GError** err)
     {
       g_error_new(XR_SERVER_ERROR, XR_SERVER_ERROR_FAILED, "Invalid address: %s", bind_addr);
       g_free(addr);
+      xr_server_stop(server);
       return FALSE;
     }
       
@@ -762,6 +762,7 @@ gboolean xr_server_bind(xr_server* server, const char* bind_addr, GError** err)
   if (local_err)
   {
     g_propagate_prefixed_error(err, local_err, "Port listen failed: ");
+    xr_server_stop(server);
     return FALSE;
   }
 
@@ -800,7 +801,7 @@ static void _sh(int signum)
   xr_server_stop(server);
 }
 
-gboolean xr_server_simple(const char* cert, const char* privkey, int threads, const char* bind, xr_servlet_def** servlets, GError** err)
+gboolean xr_server_simple(const char* cert, int threads, const char* bind, xr_servlet_def** servlets, GError** err)
 {
   if (!g_thread_supported())
     g_thread_init(NULL);
@@ -822,7 +823,7 @@ gboolean xr_server_simple(const char* cert, const char* privkey, int threads, co
     return FALSE;
 #endif
 
-  server = xr_server_new(cert, privkey, threads, err);
+  server = xr_server_new(cert, threads, err);
   if (server == NULL)
     return FALSE;
 

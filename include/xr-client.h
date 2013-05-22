@@ -37,6 +37,7 @@
 #include "xr-value-utils.h"
 
 #define XR_CLIENT_ERROR xr_client_error_quark()
+#define XR_CLIENT_RPC_ERROR xr_client_rpc_error_quark()
 
 typedef enum
 {
@@ -114,6 +115,13 @@ void xr_client_basic_auth(xr_client_conn* conn, const char* username, const char
  */
 xr_http* xr_client_get_http(xr_client_conn* conn);
 
+/** Set socket timeout.
+ * 
+ * @param conn Connection object.
+ * @param timeout Timeout in seconds.
+ */
+void xr_client_set_timeout(xr_client_conn* conn, gint timeout);
+
 /** Open new connection to the server.
  *
  * @param conn Connection object.
@@ -134,7 +142,8 @@ void xr_client_close(xr_client_conn* conn);
  *
  * @param conn Connection object.
  * @param call Call object.
- * @param err Error object.
+ * @param err Error object. Errors in XR_CLIENT_RPC_ERROR domain are RPC API
+ * errors that are defined in XDL file.
  *
  * @return Function returns FALSE on failure (including XML-RPC exception) and
  *   TRUE on success. XML-RPC exception have err->domain == 0.
@@ -142,6 +151,7 @@ void xr_client_close(xr_client_conn* conn);
 gboolean xr_client_call(xr_client_conn* conn, xr_call* call, GError** err);
 
 GQuark xr_client_error_quark();
+GQuark xr_client_rpc_error_quark();
 
 G_END_DECLS
 

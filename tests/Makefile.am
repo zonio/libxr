@@ -1,24 +1,33 @@
 SUBDIRS = unit
 
-BUILT_SOURCES = \
+COMMON_SOURCES = \
   TCommon.h \
   TCommon.c \
-  TTest1.xrs.c \
-  TTest1.xrc.c \
-  TTest1.stubs.c \
-  TTest1.c \
-  TTest1.xrs.h \
-  TTest1.xrc.h \
-  TTest1.stubs.h \
   TTest1.h \
-  TTest2.xrs.c \
+  TTest1.c \
+  TTest2.h \
+  TTest2.c
+
+CLIENT_SOURCES = \
+  TTest1.xrc.c \
+  TTest1.xrc.h \
   TTest2.xrc.c \
-  TTest2.stubs.c \
-  TTest2.c \
+  TTest2.xrc.h
+
+SERVER_SOURCES = \
+  TTest1.xrs.h \
+  TTest1.xrs.c \
+  TTest1.stubs.h \
+  TTest1.stubs.c \
   TTest2.xrs.h \
-  TTest2.xrc.h \
+  TTest2.xrs.c \
   TTest2.stubs.h \
-  TTest2.h
+  TTest2.stubs.c
+
+BUILT_SOURCES = \
+  $(COMMON_SOURCES) \
+  $(CLIENT_SOURCES) \
+  $(SERVER_SOURCES)
 
 EXTRA_DIST = \
   bench.h \
@@ -39,6 +48,7 @@ AM_CFLAGS = \
   $(GLIB_CFLAGS) \
   $(XML_CFLAGS) \
   $(JSON_CFLAGS) \
+  $(CURL_CFLAGS) \
   -I$(top_builddir) \
   -I$(top_srcdir)/include \
   -D_REENTRANT \
@@ -52,6 +62,7 @@ LDADD = \
   $(GLIB_LIBS) \
   $(XML_LIBS) \
   $(JSON_LIBS) \
+  $(CURL_LIBS) \
   $(top_builddir)/lib/libxr.la
 
 check_PROGRAMS = \
@@ -59,23 +70,36 @@ check_PROGRAMS = \
   client \
   session-client \
   server \
-  value-utils-test
+  value-utils-test \
+  job-client
+
+job_client_SOURCES = \
+  jobclient.c \
+  $(COMMON_SOURCES) \
+  $(CLIENT_SOURCES)
 
 client_SOURCES = \
   client.c \
-  $(BUILT_SOURCES)
+  $(COMMON_SOURCES) \
+  $(CLIENT_SOURCES)
 
 session_client_SOURCES = \
   session-client.c \
-  $(BUILT_SOURCES)
+  $(COMMON_SOURCES) \
+  $(CLIENT_SOURCES)
 
 tclient_SOURCES = \
   tclient.c \
-  $(BUILT_SOURCES)
+  $(COMMON_SOURCES) \
+  $(CLIENT_SOURCES)
 
 server_SOURCES = \
   server.c \
-  $(BUILT_SOURCES)
+  jobs.c \
+  jobs.h \
+  $(COMMON_SOURCES) \
+  $(CLIENT_SOURCES) \
+  $(SERVER_SOURCES)
 
 value_utils_test_SOURCES = \
   value-utils-test.c

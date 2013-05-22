@@ -24,10 +24,11 @@ Makefile.in
 /libtool
 /ltmain.sh
 /compile
+/test-driver
 /tags
 /xr-config.h
 /.misc
-/.vimrc
+.vimrc
 
 /tests/client
 /tests/server
@@ -45,6 +46,7 @@ Makefile.in
 /tests/client.log
 /tests/server.log
 /tests/session-client
+/tests/job-client
 /tests/test.get
 /tests/test.post
 /tests/unit/t001-call

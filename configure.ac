@@ -24,18 +24,18 @@ LIB_XR_VERSION=2:0:0
 AC_SUBST(LIB_XR_VERSION)
 
 # check for dependencies
-AC_CHECK_PROG(RE2C, re2c, "yes")
-if test "x$RE2C" != "xyes" ; then
-  AC_MSG_ERROR([re2c not found.])
-fi
+AC_CHECK_PROG(RE2C, re2c, re2c)
+test -z "$RE2C" && AC_MSG_ERROR([help2man not found.])
 
 GLIB_REQUIRES="glib-2.0 >= 2.30.0 gthread-2.0 >= 2.30.0 gio-2.0 >= 2.30.0"
 XML_REQUIRES="libxml-2.0 >= 2.6.20"
 JSON_REQUIRES="json >= 0.3"
+CURL_REQUIRES="libcurl"
 
 PKG_CHECK_MODULES(GLIB, [$GLIB_REQUIRES])
 PKG_CHECK_MODULES(XML, [$XML_REQUIRES])
 PKG_WITH_MODULES(JSON, [$JSON_REQUIRES], [have_json=yes], [have_json=no], [build JSON transport], [yes])
+PKG_CHECK_MODULES(CURL, [$CURL_REQUIRES])
 
 AC_SUBST(GLIB_REQUIRES)
 AC_SUBST(GLIB_CFLAGS)
