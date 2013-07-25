@@ -1,5 +1,5 @@
 AC_PREREQ(2.60)
-AC_INIT([libxr],[2.0.0],[megous@megous.com],[libxr])
+AC_INIT([libxr],[2.1.0-],[3e-list@zonio.net],[libxr])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADER([config.h])
@@ -20,7 +20,7 @@ AC_HEADER_STDC
 #   change to C+1:0:0
 # - If the interface is the same as the previous version, change to C:R+1:A
 
-LIB_XR_VERSION=2:0:0
+LIB_XR_VERSION=3:0:0
 AC_SUBST(LIB_XR_VERSION)
 
 # check for dependencies
