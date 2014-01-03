@@ -1,6 +1,6 @@
-/* 
+/*
  * Copyright 2006-2008 Ondrej Jirman <ondrej.jirman@zonio.net>
- * 
+ *
  * This file is part of libxr.
  *
  * Libxr is free software: you can redistribute it and/or modify it under the
@@ -135,7 +135,7 @@ gboolean xr_server_bind(xr_server* server, const char* port, GError** err);
  * @param err Pointer to the variable to store error to on error.
  *
  * @return Function returns FALSE on fatal error or TRUE on safe stop
- *   by @ref xr_server_stop(). Otherwise it will block, waiting for 
+ *   by @ref xr_server_stop(). Otherwise it will block, waiting for
  *   connections.
  */
 gboolean xr_server_run(xr_server* server, GError** err);
@@ -178,14 +178,15 @@ void* xr_servlet_get_priv(xr_servlet* servlet);
 xr_http* xr_servlet_get_http(xr_servlet* servlet);
 
 /** Get client IP address.
- * 
+ *
  * @param servlet Servlet object.
- * 
+ *
  * @return IP address string in the xxx.xxx.xxx.xxx format or NULL.
  */
 char* xr_servlet_get_client_ip(xr_servlet* servlet);
 
 /** Use this function as a simple way to quickly start a server.
+ * If you need to pass PEM string instead of paths see xr_server_simple_pem().
  *
  * @param cert Combined PEM file with server certificate and private.
  * @param privkey File with private key to certificate. Use NULL when
@@ -197,7 +198,22 @@ char* xr_servlet_get_client_ip(xr_servlet* servlet);
  *
  * @return Function returns FALSE on error, TRUE on success.
  */
-gboolean xr_server_simple(const char* cert, const char* privkey, 
+gboolean xr_server_simple(const char* cert, const char* privkey,
+  int threads, const char* bind, xr_servlet_def** servlets, GError** err);
+
+/** Use this function as a simple way to quickly start a server.
+ *
+ * @param cert Combined PEM string with server certificate and private.
+ * @param privkey Private key PEM string to certificate. Use NULL when
+ * certificate doesn't use key or when key is with certificate in one string.
+ * @param threads Number of threads in the pool.
+ * @param bind Port and IP address to bind to.
+ * @param servlets Servlet definition objects array (NULL termianted).
+ * @param err Pointer to the variable to store error to on error.
+ *
+ * @return Function returns FALSE on error, TRUE on success.
+ */
+gboolean xr_server_simple_pem(const char* cert, const char* privkey,
   int threads, const char* bind, xr_servlet_def** servlets, GError** err);
 
 GQuark xr_server_error_quark();

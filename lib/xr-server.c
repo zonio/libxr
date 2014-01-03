@@ -1,6 +1,6 @@
-/* 
+/*
  * Copyright 2006-2008 Ondrej Jirman <ondrej.jirman@zonio.net>
- * 
+ *
  * This file is part of libxr.
  *
  * Libxr is free software: you can redistribute it and/or modify it under the
@@ -315,7 +315,7 @@ again:
 
       /* user might have used same session ID to create servlet in other thread, check for
          this situation */
-      cur_servlet = g_hash_table_lookup(server->sessions, session_id); 
+      cur_servlet = g_hash_table_lookup(server->sessions, session_id);
       if (cur_servlet)
       {
         xr_servlet_free_fini(servlet);
@@ -380,7 +380,7 @@ again:
   }
 
   g_free(servlet_name);
-  
+
   return _xr_servlet_do_call(servlet, call);
 }
 
@@ -674,8 +674,10 @@ xr_server* xr_server_new(const char* cert, const char* privkey, int threads, GEr
 
   if (cert)
   {
-    server->cert = privkey ? g_tls_certificate_new_from_files(cert, privkey, &local_err)
-                           : g_tls_certificate_new_from_file(cert, &local_err);
+    gchar *cert_and_privkey = g_strconcat(cert, privkey, NULL);
+    server->cert = g_tls_certificate_new_from_pem(cert_and_privkey, -1, &local_err);
+    g_free(cert_and_privkey);
+
     if (local_err)
     {
       g_propagate_prefixed_error(err, local_err, "Certificate load failed: ");
@@ -753,7 +755,7 @@ gboolean xr_server_bind(xr_server* server, const char* bind_addr, GError** err)
       xr_server_stop(server);
       return FALSE;
     }
-      
+
     GSocketAddress* isaddr = g_inet_socket_address_new(iaddr, (guint16)port);
     g_socket_listener_add_address(G_SOCKET_LISTENER(server->service), isaddr, G_SOCKET_TYPE_STREAM, G_SOCKET_PROTOCOL_TCP, NULL, NULL, &local_err);
   }
@@ -803,6 +805,45 @@ static void _sh(int signum)
 }
 
 gboolean xr_server_simple(const char* cert, const char* privkey, int threads, const char* bind, xr_servlet_def** servlets, GError** err)
+{
+  GError *local_err= NULL;
+
+  GMappedFile *cert_file = g_mapped_file_new(cert, FALSE, &local_err);
+  if (local_err)
+  {
+    g_propagate_prefixed_error(err, local_err, "Certificate load failed: ");
+    g_mapped_file_unref(cert_file);
+    return FALSE;
+  }
+
+  gchar *cert_pem = g_mapped_file_get_contents(cert_file);
+
+  gchar *privkey_pem = NULL;
+  GMappedFile *privkey_file = NULL;
+  if (privkey)
+  {
+    privkey_file = g_mapped_file_new(privkey, FALSE, &local_err);
+    if (local_err)
+    {
+      g_free(cert_pem);
+      g_propagate_prefixed_error(err, local_err, "Certificate load failed: ");
+      g_mapped_file_unref(privkey_file);
+      g_mapped_file_unref(cert_file);
+      return FALSE;
+    }
+
+    privkey_pem = g_mapped_file_get_contents(privkey_file);
+  }
+
+  gboolean retval = xr_server_simple_pem(cert_pem, privkey_pem, threads, bind, servlets, err);
+
+  g_mapped_file_unref(cert_file);
+  g_mapped_file_unref(privkey_file);
+
+  return retval;
+}
+
+gboolean xr_server_simple_pem(const char* cert, const char* privkey, int threads, const char* bind, xr_servlet_def** servlets, GError** err)
 {
   if (!g_thread_supported())
     g_thread_init(NULL);
