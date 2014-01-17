@@ -20,7 +20,7 @@ AC_HEADER_STDC
 #   change to C+1:0:0
 # - If the interface is the same as the previous version, change to C:R+1:A
 
-LIB_XR_VERSION=3:0:0
+LIB_XR_VERSION=4:0:1
 AC_SUBST(LIB_XR_VERSION)
 
 # check for dependencies
@@ -96,7 +96,7 @@ AC_CONFIG_FILES([
 ])
 AC_OUTPUT
 
-echo 
+echo
 echo "libxr is now configured"
 echo
 echo "  xml-rpc transport: yes"
