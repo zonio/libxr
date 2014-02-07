@@ -1,6 +1,6 @@
-/* 
+/*
  * Copyright 2006-2008 Ondrej Jirman <ondrej.jirman@zonio.net>
- * 
+ *
  * This file is part of libxr.
  *
  * Libxr is free software: you can redistribute it and/or modify it under the
@@ -159,7 +159,7 @@ static void gen_type_marchalizers(FILE* f, xdl_typedef* t)
     {
       EL(0, "G_GNUC_UNUSED static xr_value* %s(%s _narray)", t->march_name, t->ctype);
       EL(0, "{");
-      EL(1, "gint _i;");
+      EL(1, "guint _i;");
       EL(1, "xr_value* _array = xr_value_array_new();");
       NL;
       EL(1, "for (_i = 0; _i < (_narray ? _narray->len : 0); _i++)");
@@ -311,7 +311,7 @@ static void gen_type_freealloc(FILE* f, xdl_typedef* t, int def)
     EL(1, "{");
     if (t->item_type->free_func)
     {
-      EL(2, "gint i;");
+      EL(2, "guint i;");
       NL;
       EL(2, "for (i = 0; i < val->len; i++)");
       EL(3, "%s(g_array_index(val, %s, i));", t->item_type->free_func, t->item_type->ctype);
@@ -329,7 +329,7 @@ static void gen_type_freealloc(FILE* f, xdl_typedef* t, int def)
     NL;
     EL(1, "if (orig)");
     EL(1, "{");
-    EL(2, "gint i;");
+    EL(2, "guint i;");
     EL(2, "copy = g_array_sized_new(FALSE, FALSE, sizeof(%s), orig->len);", t->item_type->ctype);
     NL;
     EL(2, "for (i = 0; i < orig->len; i++)");
@@ -455,7 +455,7 @@ static void gen_errors_impl(FILE* f, xdl_model* xdl, xdl_servlet* s)
 static gchar* out_dir = NULL;
 static gchar* xdl_file = NULL;
 static gchar* mode = "all";
-static const GOptionEntry entries[] = 
+static const GOptionEntry entries[] =
 {
   { "xdl", 'i', 0, G_OPTION_ARG_STRING, &xdl_file, "Interface description file.", "FILE" },
   { "out", 'o', 0, G_OPTION_ARG_STRING, &out_dir, "Output directory.", "DIR" },
@@ -484,7 +484,7 @@ int main(int ac, char* av[])
     printf("You must specify XDL file.\n");
     return 1;
   }
-  
+
   xdl_model* xdl = xdl_parse_file(xdl_file, &err);
   if (err)
   {
@@ -495,7 +495,7 @@ int main(int ac, char* av[])
 
   FILE* f = NULL;
   GSList *i, *j, *k;
-  
+
   int pub_headers = !strcmp(mode, "all") || !strcmp(mode, "pub-headers");
   int pub_impl = !strcmp(mode, "all") || !strcmp(mode, "pub-impl");
   int server_impl = !strcmp(mode, "all") || !strcmp(mode, "server-impl");
@@ -612,7 +612,7 @@ int main(int ac, char* av[])
     }
 
     gen_errors_impl(f, xdl, s);
-    
+
     }
 
     /***********************************************************
@@ -660,7 +660,7 @@ int main(int ac, char* av[])
     }
 
     EL(0, "#endif");
-    
+
     }
 
     /***********************************************************
@@ -1115,7 +1115,7 @@ int main(int ac, char* av[])
   }
 
   }
-  
+
   /***********************************************************
    * VAPI file                                               *
    ***********************************************************/
@@ -1201,7 +1201,7 @@ int main(int ac, char* av[])
   EL(2, "public void dump(int indent);");
   EL(1, "}");
   EL(0, "}");
-  NL;  
+  NL;
   EL(0, "[CCode (cheader_filename = \"%sCommon.h\", lower_case_cprefix = \"xr_\", cprefix = \"%s\")]", xdl->name, xdl->name);
   EL(0, "namespace %s", xdl->name);
   EL(0, "{");
