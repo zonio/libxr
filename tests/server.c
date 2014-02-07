@@ -1,6 +1,6 @@
-/* 
+/*
  * Copyright 2006-2008 Ondrej Jirman <ondrej.jirman@zonio.net>
- * 
+ *
  * This file is part of libxr.
  *
  * Libxr is free software: you can redistribute it and/or modify it under the
@@ -41,13 +41,13 @@ int main(int ac, char* av[])
     __TTest2Servlet_def(),
     NULL
   };
-  
+
   g_set_print_handler(dbg);
   g_set_printerr_handler(dbg);
 
   //xr_debug_enabled = XR_DEBUG_CALL;
 
-  xr_server_simple("server.pem", 100, "*:4444", servlets, &err);
+  xr_server_simple("server.pem", NULL, 100, "*:4444", servlets, &err);
   if (err)
     g_print("error: %s\n", err->message);
 
