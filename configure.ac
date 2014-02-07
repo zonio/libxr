@@ -15,9 +15,9 @@ AC_HEADER_STDC
 # Before making a release, the version string should be modified.
 # The string is of the form C:R:A.
 # - If interfaces have been changed or added, but binary compatibility has
-# been preserved, change to C+1:0:A+1
+#   been preserved, change to C+1:0:A+1
 # - If binary compatibility has been broken (eg removed or changed interfaces)
-# change to C+1:0:0
+#   change to C+1:0:0
 # - If the interface is the same as the previous version, change to C:R+1:A
 
 LIB_XR_VERSION=2:0:0
@@ -65,7 +65,7 @@ AC_CONFIG_COMMANDS([xr-config.h],
   cat > $outfile <<\_______EOF
 /** xr-config.h
  *
- * This is a generated file. Please modify 'configure.in'
+ * This is a generated file.  Please modify 'configure.in'
  */
 
 #ifndef __XR_CONFIG_H__
@@ -99,6 +99,6 @@ AC_OUTPUT
 echo
 echo "libxr is now configured"
 echo
-echo " xml-rpc transport: yes"
-echo " json transport: $have_json"
+echo "  xml-rpc transport: yes"
+echo "  json transport:    $have_json"
 echo
