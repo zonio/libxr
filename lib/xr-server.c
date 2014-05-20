@@ -493,6 +493,9 @@ static gboolean _xr_server_serve_request(xr_server* server, xr_server_conn* conn
   g_return_val_if_fail(server != NULL, FALSE);
   g_return_val_if_fail(conn != NULL, FALSE);
 
+  if (!g_socket_connection_is_connected(conn->conn))
+    return FALSE;
+
   /* receive HTTP request */
   if (!xr_http_read_header(conn->http, NULL))
     return FALSE;
